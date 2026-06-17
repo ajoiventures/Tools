@@ -729,7 +729,10 @@ async function addFiles(files) {
 openDB().then(async () => {
   const saved = await dbLoadPages();
   if (saved.length === 0) return;
-  pages = saved.map(r => ({ blob: r.blob, url: URL.createObjectURL(r.blob), processing: false }));
+  pages = saved.map(r => {
+    const blob = r.blob.type ? r.blob : new Blob([r.blob], { type: 'image/jpeg' });
+    return { blob, url: URL.createObjectURL(blob), processing: false };
+  });
   renderGrid();
   showToast(`Restored ${pages.length} page${pages.length>1?'s':''} from last session`);
 });
@@ -792,7 +795,7 @@ function buildThumbStrip() {
   selectPage(0);
 }
 function selectPage(i) {
-  document.querySelectorAll('.thumb-strip img').forEach((img,idx)=>img.classList.toggle('active',idx===i));
+  document.querySelectorAll('.thumb-container img').forEach((img,idx)=>img.classList.toggle('active',idx===i));
   document.getElementById('ocr-page-label').textContent=i+1;
   if (ocrCache[i]!==undefined) { document.getElementById('ocr-text').value=ocrCache[i]; return; }
   const status=document.getElementById('ocr-status'), msg=document.getElementById('ocr-msg'), ta=document.getElementById('ocr-text');
