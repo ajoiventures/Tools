@@ -1460,48 +1460,81 @@ async function sendFax() {
 function showDeliveryTracker(faxId,digits) {
   document.getElementById('result-area').innerHTML=`
     <div class="result-card pending" id="tracker-card">
-      <h3>📡 Fax Queued</h3>
+      <h3>Fax Queued</h3>
       <p>ID: <span class="fax-id">${faxId}</span></p>
-      <p>Sending to +${digits} — polling every 15 sec…</p>
+      <p id="fax-live-status">Sending to +${digits}. Status: QUEUED.</p>
       <div class="delivery-track">
-        <div class="delivery-step done"   id="ds-q"><div class="dot"></div><span class="dlabel">✓ Queued by Sinch</span></div>
-        <div class="delivery-step active" id="ds-s"><div class="dot"></div><span class="dlabel">Dialing…</span></div>
+        <div class="delivery-step done"   id="ds-q"><div class="dot"></div><span class="dlabel">Queued by Sinch</span></div>
+        <div class="delivery-step active" id="ds-s"><div class="dot"></div><span class="dlabel">Waiting for update</span></div>
         <div class="delivery-step"        id="ds-d"><div class="dot"></div><span class="dlabel">Delivered</span></div>
       </div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:10px;width:auto" onclick="checkFaxStatusNow('${faxId}')">Check Status</button>
     </div>`;
+}
+async function checkFaxStatusNow(faxId) {
+  const live=document.getElementById('fax-live-status');
+  try{
+    const r=await fetch(getStatusEndpoint(faxId),{headers:{'Authorization':getAuth()}});
+    const t=await r.text();
+    const d=t?JSON.parse(t):{};
+    if(!r.ok) throw new Error(d?.title||d?.detail||`HTTP ${r.status}`);
+    updateTracker(d.status||d.fax?.status||d.state||'UNKNOWN',d);
+    return d;
+  }catch(e){
+    if(live) live.textContent=`Status check failed: ${String(e.message||e)}`;
+    return null;
+  }
 }
 function startPolling(faxId) {
   let n=0;
+  checkFaxStatusNow(faxId);
   pollTimer=setInterval(async()=>{
-    if(++n>20){clearInterval(pollTimer);const c=document.getElementById('tracker-card');if(c)c.querySelector('p:last-of-type').textContent='Still in progress — check dashboard.sinch.com.';return;}
-    try{
-      const r=await fetch(getStatusEndpoint(faxId),{headers:{'Authorization':getAuth()}});
-      if(!r.ok) return;
-      const t=await r.text(); const d=t?JSON.parse(t):{};
-      const st=d.status; // Sinch: QUEUED, IN_PROGRESS, COMPLETED, FAILED
-      if(st==='COMPLETED'){clearInterval(pollTimer);updateTracker('success',d);}
-      else if(st==='FAILED'){clearInterval(pollTimer);updateTracker('failed',d);}
-    }catch{}
+    if(++n>40){
+      clearInterval(pollTimer);
+      const live=document.getElementById('fax-live-status');
+      if(live) live.textContent='Still in progress. Check the Sinch dashboard with the Fax ID above.';
+      return;
+    }
+    const d=await checkFaxStatusNow(faxId);
+    const st=String(d?.status||d?.fax?.status||d?.state||'').toUpperCase();
+    if(['COMPLETED','FAILURE','FAILED','CANCELED','CANCELLED'].includes(st)) clearInterval(pollTimer);
   },15000);
 }
 function updateTracker(result,data) {
   const card=document.getElementById('tracker-card'); if(!card) return;
   const ds=document.getElementById('ds-s'), dd=document.getElementById('ds-d');
-  if(result==='success'){
-    card.className='result-card success'; card.querySelector('h3').textContent='✅ Fax Delivered!';
-    ds.className='delivery-step done'; ds.querySelector('.dlabel').textContent='✓ Connected';
-    dd.className='delivery-step done'; dd.querySelector('.dlabel').textContent='✓ Delivered';
-  } else if(result==='failed'){
-    card.className='result-card error'; card.querySelector('h3').textContent='❌ Delivery Failed';
-    const reason=data?.errorType||data?.error||'Unknown';
-    card.querySelector('p:last-of-type').textContent=`Failed: ${reason}. Check number and retry.`;
-    ds.className='delivery-step failed'; dd.className='delivery-step failed';
+  const live=document.getElementById('fax-live-status');
+  const st=String(result||'UNKNOWN').toUpperCase();
+  if(live) live.textContent=`Status: ${st}${data?.errorMessage?` - ${data.errorMessage}`:''}`;
+  if(st==='QUEUED'){
+    card.className='result-card pending';
+    card.querySelector('h3').textContent='Fax Queued';
+    ds.className='delivery-step active'; ds.querySelector('.dlabel').textContent='Queued';
+    dd.className='delivery-step';
+  } else if(st==='IN_PROGRESS'){
+    card.className='result-card pending';
+    card.querySelector('h3').textContent='Fax In Progress';
+    ds.className='delivery-step active'; ds.querySelector('.dlabel').textContent='Sending';
+    dd.className='delivery-step';
+  } else if(st==='COMPLETED'){
+    card.className='result-card success'; card.querySelector('h3').textContent='Fax Delivered';
+    ds.className='delivery-step done'; ds.querySelector('.dlabel').textContent='Connected';
+    dd.className='delivery-step done'; dd.querySelector('.dlabel').textContent='Delivered';
+  } else if(['FAILURE','FAILED','CANCELED','CANCELLED'].includes(st)){
+    card.className='result-card error'; card.querySelector('h3').textContent='Delivery Failed';
+    const reason=data?.errorMessage||data?.errorType||data?.errorCode||data?.error||'Unknown';
+    if(live) live.textContent=`Failed: ${reason}. Check number and retry.`;
+    ds.className='delivery-step failed'; ds.querySelector('.dlabel').textContent='Failed';
+    dd.className='delivery-step failed'; dd.querySelector('.dlabel').textContent='Not delivered';
     document.getElementById('send-btns').style.display='flex';
-    document.getElementById('btn-send').disabled=false; document.getElementById('btn-send').textContent='📠 Retry';
+    document.getElementById('btn-send').disabled=false; document.getElementById('btn-send').textContent='Retry';
+  } else {
+    card.className='result-card pending';
+    card.querySelector('h3').textContent='Fax Status Pending';
+    ds.className='delivery-step active'; ds.querySelector('.dlabel').textContent=st;
   }
 }
-
-// ── Navigation ────────────────────────────────────────────────────────────────
+// -- Navigation ────────────────────────────────────────────────────────────────
 function goStep(n) {
   if(n>=2&&pages.filter(p=>!p.processing).length===0) return alert('Add at least one page first.');
   if(n===5){const to=getFaxNumber().replace(/\D/g,'');if(to.length<10) return alert('Select a valid fax number.');buildSummary();}
