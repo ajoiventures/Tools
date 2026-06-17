@@ -166,15 +166,18 @@ textarea{min-height:90px;}
 footer{padding:12px 16px;text-align:center;font-size:11px;color:var(--muted);border-top:1px solid var(--border);}
 
 /* ── Camera Scanner ── */
-.cam-scanner{position:fixed;inset:0;background:#111;z-index:300;display:none;flex-direction:column;}
+.cam-scanner{position:fixed;inset:0;background:#000;z-index:300;display:none;flex-direction:column;}
 .cam-scanner.open{display:flex;}
 .cam-top-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#000;flex-shrink:0;}
 .cam-close{background:none;border:none;color:#fff;font-size:24px;cursor:pointer;padding:4px 8px;line-height:1;}
-#cam-status{color:rgba(255,255,255,.8);font-size:13px;}
-.cam-video-wrap{position:relative;flex:1;overflow:hidden;}
-#cam-video{width:100%;height:100%;object-fit:cover;display:block;}
-#cam-overlay{position:absolute;inset:0;width:100%;height:100%;touch-action:none;}
-/* Live view toolbar */
+#cam-status{color:rgba(255,255,255,.75);font-size:13px;}
+/* Video */
+.cam-view{position:relative;flex:1;overflow:hidden;}
+#cam-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
+/* Frozen photo canvas (exact match to video display) */
+#cam-photo{position:absolute;inset:0;width:100%;height:100%;display:none;}
+#cam-overlay{position:absolute;inset:0;width:100%;height:100%;touch-action:none;display:none;}
+/* Capture button */
 .cam-toolbar{display:flex;align-items:center;justify-content:center;padding:20px 16px;background:#000;flex-shrink:0;}
 .cam-capture{width:68px;height:68px;border-radius:50%;background:transparent;border:4px solid #fff;cursor:pointer;position:relative;padding:0;transition:transform .1s;}
 .cam-capture::after{content:'';position:absolute;inset:5px;border-radius:50%;background:#fff;}
@@ -182,7 +185,7 @@ footer{padding:12px 16px;text-align:center;font-size:11px;color:var(--muted);bor
 /* Adjust bar */
 .cam-adj-wrap{display:none;flex-direction:column;background:#000;flex-shrink:0;}
 .cam-adj-modes{display:flex;gap:8px;padding:10px 12px 4px;}
-.cam-mode-btn{flex:1;padding:8px 4px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);font-size:12px;font-weight:600;cursor:pointer;transition:background .12s,color .12s;}
+.cam-mode-btn{flex:1;padding:8px 4px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);font-size:12px;font-weight:600;cursor:pointer;}
 .cam-mode-btn.active{background:#6c63ff;border-color:#6c63ff;color:#fff;}
 .cam-adj-actions{display:flex;gap:8px;padding:8px 12px 14px;}
 .cam-retake-btn{flex:1;padding:11px;border-radius:10px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:14px;font-weight:600;cursor:pointer;}
@@ -199,8 +202,9 @@ footer{padding:12px 16px;text-align:center;font-size:11px;color:var(--muted);bor
     <span id="cam-status">Tap button to capture</span>
     <div style="width:40px"></div>
   </div>
-  <div class="cam-video-wrap">
+  <div class="cam-view">
     <video id="cam-video" autoplay playsinline muted></video>
+    <canvas id="cam-photo"></canvas>
     <canvas id="cam-overlay"></canvas>
   </div>
   <div class="cam-toolbar" id="cam-toolbar">
@@ -1069,23 +1073,15 @@ window.addEventListener('load', () => {
 
 // ── Camera Scanner ────────────────────────────────────────────────────────────
 let camStream=null, camSnap=null, camCorners=null, camDrag=-1, camRAF=null, camMode='color';
-let camCW=0, camCH=0; // CSS pixel dimensions (used for corners & drawing coords)
 
 const camScanner = document.getElementById('cam-scanner');
 const camVideo   = document.getElementById('cam-video');
-const camCanvas  = document.getElementById('cam-overlay');
-const camCtx     = camCanvas.getContext('2d');
+const camPhoto   = document.getElementById('cam-photo');   // frozen photo canvas
+const camOverlay = document.getElementById('cam-overlay'); // corner lines canvas
+const camPhCtx   = camPhoto.getContext('2d');
+const camOvCtx   = camOverlay.getContext('2d');
 const camToolbar = document.getElementById('cam-toolbar');
 const camAdjWrap = document.getElementById('cam-adj-wrap');
-
-function setupCamCanvas() {
-  const dpr = window.devicePixelRatio || 1;
-  camCW = camVideo.clientWidth  || camVideo.offsetWidth;
-  camCH = camVideo.clientHeight || camVideo.offsetHeight;
-  camCanvas.width  = camCW * dpr;
-  camCanvas.height = camCH * dpr;
-  camCtx.setTransform(dpr, 0, 0, dpr, 0, 0); // draw in CSS pixels
-}
 
 async function openCamera() {
   try {
@@ -1096,12 +1092,10 @@ async function openCamera() {
     await camVideo.play();
     camScanner.classList.add('open');
     document.body.style.overflow = 'hidden';
-    camVideo.addEventListener('loadedmetadata', setupCamCanvas, { once:true });
   } catch(e) {
     document.getElementById('camera-input').click();
   }
 }
-window.addEventListener('resize', ()=>{ if(camStream) setupCamCanvas(); });
 
 function closeCamera() {
   if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream=null; }
@@ -1109,69 +1103,76 @@ function closeCamera() {
   camScanner.classList.remove('open');
   document.body.style.overflow='';
   camSnap=null; camCorners=null; camDrag=-1;
+  camVideo.style.display='block';
+  camPhoto.style.display='none'; camOverlay.style.display='none';
   camToolbar.style.display='flex'; camAdjWrap.style.display='none';
+  document.getElementById('cam-status').textContent='Tap button to capture';
 }
 
-// ── Capture ───────────────────────────────────────────────────────────────────
+// ── Capture: draw video frame to photo canvas at display size ─────────────────
 function camCapture() {
   if(!camVideo.videoWidth) return;
-  camSnap = document.createElement('canvas');
-  camSnap.width=camVideo.videoWidth; camSnap.height=camVideo.videoHeight;
-  camSnap.getContext('2d').drawImage(camVideo,0,0);
+  // Size both canvases to exactly what the user sees
+  const W = camVideo.clientWidth, H = camVideo.clientHeight;
+  camPhoto.width  = W; camPhoto.height  = H;
+  camOverlay.width= W; camOverlay.height= H;
+  // Draw the video as displayed (object-fit:cover handles cropping)
+  camPhCtx.drawImage(camVideo, 0, 0, W, H);
+  camSnap = { canvas: camPhoto, w: W, h: H };
   camVideo.pause();
-  setupCamCanvas(); // re-measure in case layout shifted
-  const pad=Math.round(Math.min(camCW,camCH)*.04);
-  camCorners=[[pad,pad],[camCW-pad,pad],[camCW-pad,camCH-pad],[pad,camCH-pad]];
-  camMode='color'; setMode('color',true);
+  camVideo.style.display='none';
+  camPhoto.style.display='block'; camOverlay.style.display='block';
+  const pad = Math.round(Math.min(W,H) * .05);
+  camCorners = [[pad,pad],[W-pad,pad],[W-pad,H-pad],[pad,H-pad]];
+  camMode='color'; setMode('color');
   camToolbar.style.display='none'; camAdjWrap.style.display='flex';
   document.getElementById('cam-status').textContent='Drag corners · pick mode · Add Page';
   if(camRAF) cancelAnimationFrame(camRAF);
-  drawAdjust();
+  drawOverlay();
 }
 
 function camRetake() {
   if(camRAF){ cancelAnimationFrame(camRAF); camRAF=null; }
   camSnap=null; camCorners=null;
+  camVideo.style.display='block';
+  camPhoto.style.display='none'; camOverlay.style.display='none';
   camToolbar.style.display='flex'; camAdjWrap.style.display='none';
   document.getElementById('cam-status').textContent='Tap button to capture';
   camVideo.play();
 }
 
 // ── Mode picker ───────────────────────────────────────────────────────────────
-function setMode(m, silent) {
+function setMode(m) {
   camMode=m;
-  ['color','bw','enhance'].forEach(id=>{
-    document.getElementById('mode-'+id).classList.toggle('active', id===m);
-  });
+  ['color','bw','enhance'].forEach(id=>document.getElementById('mode-'+id).classList.toggle('active',id===m));
 }
 
-// ── Draw adjustment view ──────────────────────────────────────────────────────
-function drawAdjust() {
-  if(!camSnap||!camCorners) return;
-  camCtx.drawImage(camSnap,0,0,camCW,camCH);
-  // Quad
+// ── Overlay: draw corner quad on the transparent overlay canvas ───────────────
+function drawOverlay() {
+  if(!camCorners) return;
+  const W=camOverlay.width, H=camOverlay.height;
+  camOvCtx.clearRect(0,0,W,H);
   const[tl,tr,br,bl]=camCorners;
-  camCtx.beginPath(); camCtx.moveTo(...tl);camCtx.lineTo(...tr);camCtx.lineTo(...br);camCtx.lineTo(...bl); camCtx.closePath();
-  camCtx.globalAlpha=.15; camCtx.fillStyle='#fff'; camCtx.fill(); camCtx.globalAlpha=1;
-  camCtx.strokeStyle='#fff'; camCtx.lineWidth=2; camCtx.setLineDash([]); camCtx.stroke();
-  // Handles
+  camOvCtx.beginPath(); camOvCtx.moveTo(...tl);camOvCtx.lineTo(...tr);camOvCtx.lineTo(...br);camOvCtx.lineTo(...bl); camOvCtx.closePath();
+  camOvCtx.globalAlpha=.12; camOvCtx.fillStyle='#fff'; camOvCtx.fill(); camOvCtx.globalAlpha=1;
+  camOvCtx.strokeStyle='#fff'; camOvCtx.lineWidth=2; camOvCtx.setLineDash([]); camOvCtx.stroke();
   camCorners.forEach(([x,y])=>{
-    camCtx.beginPath(); camCtx.arc(x,y,18,0,Math.PI*2); camCtx.fillStyle='rgba(0,0,0,.4)'; camCtx.fill();
-    camCtx.beginPath(); camCtx.arc(x,y,18,0,Math.PI*2); camCtx.strokeStyle='#fff'; camCtx.lineWidth=2.5; camCtx.stroke();
-    camCtx.beginPath(); camCtx.arc(x,y,5,0,Math.PI*2);  camCtx.fillStyle='#fff'; camCtx.fill();
+    camOvCtx.beginPath(); camOvCtx.arc(x,y,20,0,Math.PI*2); camOvCtx.fillStyle='rgba(0,0,0,.35)'; camOvCtx.fill();
+    camOvCtx.beginPath(); camOvCtx.arc(x,y,20,0,Math.PI*2); camOvCtx.strokeStyle='#fff'; camOvCtx.lineWidth=2.5; camOvCtx.stroke();
+    camOvCtx.beginPath(); camOvCtx.arc(x,y,5,0,Math.PI*2);  camOvCtx.fillStyle='#fff'; camOvCtx.fill();
   });
-  camRAF=requestAnimationFrame(drawAdjust);
+  camRAF=requestAnimationFrame(drawOverlay);
 }
 
 // ── Add page ──────────────────────────────────────────────────────────────────
 async function camUse() {
   if(!camSnap||!camCorners) return;
-  const vw=camSnap.width, vh=camSnap.height;
-  const vidCorners=camCorners.map(([x,y])=>[x/camCW*vw, y/camCH*vh]);
+  const { canvas, w, h } = camSnap;
+  // corners are already in photo canvas pixel space (same W×H), no remapping needed
   closeCamera();
   const banner=document.getElementById('proc-banner'), msg=document.getElementById('proc-msg');
   banner.classList.add('show'); msg.textContent='Processing…';
-  const warped=perspectiveWarp(camSnap,vidCorners);
+  const warped=perspectiveWarp(canvas, camCorners);
   const scale=Math.min(FAX_W/warped.width,FAX_H/warped.height);
   const ow=Math.round(warped.width*scale), oh=Math.round(warped.height*scale);
   const out=document.getElementById('proc-canvas');
@@ -1193,7 +1194,7 @@ async function camUse() {
 
 // ── Corner dragging ───────────────────────────────────────────────────────────
 function evtPos(e){
-  const r=camCanvas.getBoundingClientRect(), s=e.touches?e.touches[0]:e;
+  const r=camOverlay.getBoundingClientRect(), s=e.touches?e.touches[0]:e;
   return [s.clientX-r.left, s.clientY-r.top];
 }
 function nearestCorner(p){
@@ -1202,12 +1203,12 @@ function nearestCorner(p){
   camCorners.forEach(([cx,cy],i)=>{ const d=Math.hypot(p[0]-cx,p[1]-cy); if(d<bestD){bestD=d;best=i;} });
   return best;
 }
-camCanvas.addEventListener('touchstart',e=>{e.preventDefault();camDrag=nearestCorner(evtPos(e));},{passive:false});
-camCanvas.addEventListener('touchmove', e=>{e.preventDefault();if(camDrag>=0)camCorners[camDrag]=evtPos(e);},{passive:false});
-camCanvas.addEventListener('touchend',  ()=>{camDrag=-1;});
-camCanvas.addEventListener('mousedown', e=>{camDrag=nearestCorner(evtPos(e));});
-camCanvas.addEventListener('mousemove', e=>{if(camDrag>=0)camCorners[camDrag]=evtPos(e);});
-camCanvas.addEventListener('mouseup',   ()=>{camDrag=-1;});
+camOverlay.addEventListener('touchstart',e=>{e.preventDefault();camDrag=nearestCorner(evtPos(e));},{passive:false});
+camOverlay.addEventListener('touchmove', e=>{e.preventDefault();if(camDrag>=0)camCorners[camDrag]=evtPos(e);},{passive:false});
+camOverlay.addEventListener('touchend',  ()=>{camDrag=-1;});
+camOverlay.addEventListener('mousedown', e=>{camDrag=nearestCorner(evtPos(e));});
+camOverlay.addEventListener('mousemove', e=>{if(camDrag>=0)camCorners[camDrag]=evtPos(e);});
+camOverlay.addEventListener('mouseup',   ()=>{camDrag=-1;});
 </script>
 </body>
 </html>
