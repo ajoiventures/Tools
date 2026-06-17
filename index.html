@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<link rel="icon" href="data:,">
 <title>RetroFax</title>
 <style>
 :root{
@@ -689,6 +690,63 @@ function showToast(msg) {
 
 // ── Image processing ──────────────────────────────────────────────────────────
 const FAX_W = 1728, FAX_H = 2236;
+const WARP_MAX_DIM = 1800;
+
+function fullPageCornersForCanvas(canvas, padRatio=.02) {
+  const pad = Math.round(Math.min(canvas.width, canvas.height) * padRatio);
+  return [
+    [pad,pad],
+    [canvas.width-pad,pad],
+    [canvas.width-pad,canvas.height-pad],
+    [pad,canvas.height-pad]
+  ];
+}
+
+function polygonArea(points) {
+  let area=0;
+  for(let i=0;i<points.length;i++){
+    const [x1,y1]=points[i], [x2,y2]=points[(i+1)%points.length];
+    area += x1*y2 - x2*y1;
+  }
+  return Math.abs(area)/2;
+}
+
+function isUsableDocumentCorners(corners, canvas) {
+  if(!corners || corners.length!==4) return false;
+  if(corners.some(([x,y]) => !Number.isFinite(x) || !Number.isFinite(y))) return false;
+  const w=canvas.width, h=canvas.height, maxSlack=Math.max(w,h)*.08;
+  if(corners.some(([x,y]) => x < -maxSlack || x > w+maxSlack || y < -maxSlack || y > h+maxSlack)) return false;
+  const area = polygonArea(corners), canvasArea = w*h;
+  if(area < canvasArea*.12 || area > canvasArea*1.08) return false;
+  const top=Math.hypot(corners[1][0]-corners[0][0],corners[1][1]-corners[0][1]);
+  const bottom=Math.hypot(corners[2][0]-corners[3][0],corners[2][1]-corners[3][1]);
+  const left=Math.hypot(corners[3][0]-corners[0][0],corners[3][1]-corners[0][1]);
+  const right=Math.hypot(corners[2][0]-corners[1][0],corners[2][1]-corners[1][1]);
+  return Math.min(top,bottom,left,right) >= Math.min(w,h)*.18;
+}
+
+function detectDocumentCornersSafe(srcCanvas) {
+  try {
+    const corners = detectDocumentCorners(srcCanvas);
+    return isUsableDocumentCorners(corners, srcCanvas) ? corners : fullPageCornersForCanvas(srcCanvas, .025);
+  } catch {
+    return fullPageCornersForCanvas(srcCanvas, .025);
+  }
+}
+
+function prepareWarpSource(srcCanvas, corners, maxDim=WARP_MAX_DIM) {
+  const biggest = Math.max(srcCanvas.width, srcCanvas.height);
+  if(biggest <= maxDim) return { canvas: srcCanvas, corners };
+  const scale = maxDim / biggest;
+  const work = document.createElement('canvas');
+  work.width = Math.round(srcCanvas.width * scale);
+  work.height = Math.round(srcCanvas.height * scale);
+  work.getContext('2d').drawImage(srcCanvas,0,0,work.width,work.height);
+  return {
+    canvas: work,
+    corners: corners.map(([x,y]) => [x*scale,y*scale])
+  };
+}
 
 function gaussBlur5(gray, w, h) {
   const k=[1,4,7,4,1,4,16,26,16,4,7,26,41,26,7,4,16,26,16,4,1,4,7,4,1], ksum=273;
@@ -705,8 +763,9 @@ function detectDocumentCorners(srcCanvas) {
   const W=640, sc=Math.min(W/srcCanvas.width,1);
   const w=Math.round(srcCanvas.width*sc), h=Math.round(srcCanvas.height*sc);
   const tmp=document.createElement('canvas'); tmp.width=w; tmp.height=h;
-  tmp.getContext('2d').drawImage(srcCanvas,0,0,w,h);
-  const data=tmp.getContext('2d').getImageData(0,0,w,h).data;
+  const tmpCtx=tmp.getContext('2d',{willReadFrequently:true});
+  tmpCtx.drawImage(srcCanvas,0,0,w,h);
+  const data=tmpCtx.getImageData(0,0,w,h).data;
   const gray=new Float32Array(w*h);
   for(let i=0;i<data.length;i+=4) gray[i>>2]=data[i]*.299+data[i+1]*.587+data[i+2]*.114;
   // Sample background color from corner strips (~7% margins)
@@ -773,7 +832,7 @@ function perspectiveWarp(srcCanvas, corners){
   const out=document.createElement('canvas'); out.width=ow; out.height=oh;
   const outCtx=out.getContext('2d');
   const outData=outCtx.createImageData(ow,oh);
-  const srcD=srcCanvas.getContext('2d').getImageData(0,0,srcCanvas.width,srcCanvas.height).data;
+  const srcD=srcCanvas.getContext('2d',{willReadFrequently:true}).getImageData(0,0,srcCanvas.width,srcCanvas.height).data;
   const sw=srcCanvas.width,sh=srcCanvas.height;
   for(let dy=0;dy<oh;dy++) for(let dx=0;dx<ow;dx++){
     const ww=h6*dx+h7*dy+1;
@@ -797,8 +856,9 @@ async function processImage(file) {
     if (file.type === 'application/pdf') { resolve(file); return; }
     const img = new Image();
     const url = URL.createObjectURL(file);
-    img.onload = () => {
+    img.onload = async () => {
       URL.revokeObjectURL(url);
+      await new Promise(requestAnimationFrame);
       let sw=img.naturalWidth, sh=img.naturalHeight;
       const isLand = CFG.rotate && sw > sh;
       const raw=document.createElement('canvas');
@@ -808,13 +868,14 @@ async function processImage(file) {
       if(isLand){rctx.translate(raw.width/2,raw.height/2);rctx.rotate(Math.PI/2);rctx.drawImage(img,-raw.height/2,-raw.width/2,raw.height,raw.width);}
       else rctx.drawImage(img,0,0);
       rctx.restore();
-      const corners=detectDocumentCorners(raw);
-      const warped=perspectiveWarp(raw,corners);
+      const corners=detectDocumentCornersSafe(raw);
+      const prepared=prepareWarpSource(raw,corners);
+      const warped=perspectiveWarp(prepared.canvas,prepared.corners);
       const scale=Math.min(FAX_W/warped.width,FAX_H/warped.height);
       const ow=Math.round(warped.width*scale), oh=Math.round(warped.height*scale);
       const out=document.getElementById('proc-canvas');
       out.width=ow; out.height=oh;
-      const ctx=out.getContext('2d');
+      const ctx=out.getContext('2d',{willReadFrequently:true});
       ctx.drawImage(warped,0,0,ow,oh);
       if(CFG.bw) applyAdaptiveBW(ctx,ow,oh); else applyAutoLevels(ctx,ow,oh);
       out.toBlob(b=>resolve(b),'image/jpeg',parseFloat(CFG.quality));
@@ -826,6 +887,7 @@ async function processImage(file) {
 
 // ── Pro image processing ──────────────────────────────────────────────────────
 function applyAutoLevels(ctx,w,h){
+  ctx = ctx.canvas.getContext('2d',{willReadFrequently:true});
   const id=ctx.getImageData(0,0,w,h),d=id.data;
   const hist=new Int32Array(256);
   for(let i=0;i<d.length;i+=4) hist[(.299*d[i]+.587*d[i+1]+.114*d[i+2])|0]++;
@@ -838,6 +900,7 @@ function applyAutoLevels(ctx,w,h){
 
 function applyAdaptiveBW(ctx,w,h){
   applyAutoLevels(ctx,w,h);
+  ctx = ctx.canvas.getContext('2d',{willReadFrequently:true});
   const id=ctx.getImageData(0,0,w,h),d=id.data;
   const gray=new Float32Array(w*h);
   for(let i=0;i<d.length;i+=4) gray[i>>2]=d[i]*.299+d[i+1]*.587+d[i+2]*.114;
@@ -1046,7 +1109,7 @@ function syncCustom() { document.getElementById('custom-wrap').style.display=doc
 function fmtFax(n) { const d=n.replace(/\D/g,''); return d.length===11?`+${d[0]} (${d.slice(1,4)}) ${d.slice(4,7)}-${d.slice(7)}`:'+'+d; }
 
 function buildSummary() {
-  document.getElementById('sum-pages').textContent  = `${pages.length} page${pages.length>1?'s':''} (B&W optimized)`;
+  document.getElementById('sum-pages').textContent  = `${pages.length} page${pages.length>1?'s':''} (PDF bundle)`;
   document.getElementById('sum-to').textContent     = fmtFax(getFaxNumber());
   document.getElementById('sum-cover').textContent  = document.getElementById('cover-text').value.trim()||'(none)';
   document.getElementById('sum-cost').textContent   = `~$${(pages.length*.07).toFixed(2)} (${pages.length} × $0.07)`;
@@ -1056,6 +1119,81 @@ function buildSummary() {
 }
 
 // ── Send + poll ───────────────────────────────────────────────────────────────
+async function imageBlobInfo(blob) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(blob);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve({ width: img.naturalWidth || img.width, height: img.naturalHeight || img.height });
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image page could not be loaded for PDF.')); };
+    img.src = url;
+  });
+}
+
+function bytesFromAscii(s) {
+  return new TextEncoder().encode(s);
+}
+
+function concatBytes(parts) {
+  const total = parts.reduce((n,p) => n + p.length, 0);
+  const out = new Uint8Array(total);
+  let off = 0;
+  parts.forEach(p => { out.set(p, off); off += p.length; });
+  return out;
+}
+
+async function imagesToPdfBlob(imageBlobs) {
+  const pageW = 612, pageH = 792, margin = 24;
+  const infos = [];
+  for(const blob of imageBlobs) infos.push(await imageBlobInfo(blob));
+  const objects = [];
+  objects[1] = bytesFromAscii('<< /Type /Catalog /Pages 2 0 R >>');
+  const kids = imageBlobs.map((_,i) => `${3+i*3} 0 R`).join(' ');
+  objects[2] = bytesFromAscii(`<< /Type /Pages /Count ${imageBlobs.length} /Kids [ ${kids} ] >>`);
+
+  for(let i=0;i<imageBlobs.length;i++){
+    const pageObj = 3+i*3, contentObj = pageObj+1, imageObj = pageObj+2;
+    const info = infos[i];
+    const scale = Math.min((pageW-margin*2)/info.width, (pageH-margin*2)/info.height);
+    const drawW = info.width * scale, drawH = info.height * scale;
+    const x = (pageW-drawW)/2, y = (pageH-drawH)/2;
+    const stream = `q\n${drawW.toFixed(2)} 0 0 ${drawH.toFixed(2)} ${x.toFixed(2)} ${y.toFixed(2)} cm\n/Im${i+1} Do\nQ\n`;
+    objects[pageObj] = bytesFromAscii(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageW} ${pageH}] /Resources << /XObject << /Im${i+1} ${imageObj} 0 R >> >> /Contents ${contentObj} 0 R >>`);
+    objects[contentObj] = bytesFromAscii(`<< /Length ${stream.length} >>\nstream\n${stream}endstream`);
+    const jpgBytes = new Uint8Array(await imageBlobs[i].arrayBuffer());
+    objects[imageObj] = concatBytes([
+      bytesFromAscii(`<< /Type /XObject /Subtype /Image /Width ${info.width} /Height ${info.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpgBytes.length} >>\nstream\n`),
+      jpgBytes,
+      bytesFromAscii('\nendstream')
+    ]);
+  }
+
+  const parts = [bytesFromAscii('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n')];
+  const offsets = [0];
+  for(let i=1;i<objects.length;i++){
+    offsets[i] = parts.reduce((n,p)=>n+p.length,0);
+    parts.push(bytesFromAscii(`${i} 0 obj\n`), objects[i], bytesFromAscii('\nendobj\n'));
+  }
+  const xrefOffset = parts.reduce((n,p)=>n+p.length,0);
+  let xref = `xref\n0 ${objects.length}\n0000000000 65535 f \n`;
+  for(let i=1;i<objects.length;i++) xref += `${String(offsets[i]).padStart(10,'0')} 00000 n \n`;
+  xref += `trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+  parts.push(bytesFromAscii(xref));
+  return new Blob(parts, { type: 'application/pdf' });
+}
+
+async function appendFaxFiles(fd) {
+  const imagePages = pages.filter(pg => pg.blob && pg.blob.type !== 'application/pdf').map(pg => pg.blob);
+  const pdfPages = pages.filter(pg => pg.blob && pg.blob.type === 'application/pdf').map(pg => pg.blob);
+  if(imagePages.length) {
+    const pdfBlob = await imagesToPdfBlob(imagePages);
+    fd.append('file', pdfBlob, 'retrofax_pages.pdf');
+  }
+  pdfPages.forEach((blob,i) => fd.append('file', blob, `uploaded_${i+1}.pdf`));
+}
+
 async function sendFax() {
   const btn=document.getElementById('btn-send'), out=document.getElementById('result-area');
   btn.disabled=true; btn.textContent=`📡 Sending ${pages.length} page${pages.length>1?'s':''}…`; out.innerHTML='';
@@ -1063,7 +1201,7 @@ async function sendFax() {
   try {
     const fd=new FormData();
     fd.append('to','+'+digits);
-    pages.forEach((pg,i)=>fd.append('file',pg.blob,`page_${i+1}.jpg`));
+    await appendFaxFiles(fd);
     const cover=document.getElementById('cover-text').value.trim();
     if(cover) fd.append('header',cover);
     const resp=await fetch(getEndpoint(),{method:'POST',headers:{'Authorization':getAuth()},body:fd});
@@ -1280,8 +1418,12 @@ function resetCameraCorners() {
 function autoFitCameraCorners(showMessage=true) {
   if(!camSnap) return;
   try {
-    camCorners = fullToDisplayCorners(detectDocumentCorners(camSnap));
-    if(showMessage) document.getElementById('cam-status').textContent='Auto fit applied. Drag any corner to fine tune.';
+    const detected = detectDocumentCorners(camSnap);
+    const usable = isUsableDocumentCorners(detected, camSnap);
+    camCorners = fullToDisplayCorners(usable ? detected : fullPageCornersForCanvas(camSnap, .025));
+    if(showMessage) document.getElementById('cam-status').textContent=usable
+      ? 'Auto fit applied. Drag any corner to fine tune.'
+      : 'Auto fit could not find edges. Full page selected.';
   } catch {
     setFullPageCorners();
     if(showMessage) document.getElementById('cam-status').textContent='Auto fit failed. Full page selected.';
@@ -1313,12 +1455,14 @@ async function camUse() {
   closeCamera();
   const banner=document.getElementById('proc-banner'), msg=document.getElementById('proc-msg');
   banner.classList.add('show'); msg.textContent='Processing…';
-  const warped=perspectiveWarp(snapRef, fullCorners);
+  await new Promise(requestAnimationFrame);
+  const prepared=prepareWarpSource(snapRef, fullCorners);
+  const warped=perspectiveWarp(prepared.canvas, prepared.corners);
   const faxScale=Math.min(FAX_W/warped.width,FAX_H/warped.height);
   const ow=Math.round(warped.width*faxScale), oh=Math.round(warped.height*faxScale);
   const out=document.getElementById('proc-canvas');
   out.width=ow; out.height=oh;
-  const ctx=out.getContext('2d');
+  const ctx=out.getContext('2d',{willReadFrequently:true});
   ctx.drawImage(warped,0,0,ow,oh);
   if(camMode==='bw') applyAdaptiveBW(ctx,ow,oh);
   else if(camMode==='enhance') applyAutoLevels(ctx,ow,oh);
