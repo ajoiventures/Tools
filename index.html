@@ -584,27 +584,101 @@ function showToast(msg) {
 
 // ── Image processing ──────────────────────────────────────────────────────────
 const FAX_W = 1728, FAX_H = 2236;
-function findDocumentBounds(imageData) {
-  const d = imageData.data, w = imageData.width, h = imageData.height;
-  let minX = w, maxX = 0, minY = h, maxY = 0, found = false;
-  for (let i = 0; i < d.length; i += 4) {
-    const gray = d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114;
-    if (gray < 200) {
-      found = true;
-      const idx = i / 4, x = idx % w, y = Math.floor(idx / w);
-      minX = Math.min(minX, x); maxX = Math.max(maxX, x);
-      minY = Math.min(minY, y); maxY = Math.max(maxY, y);
-    }
+
+function gaussBlur5(gray, w, h) {
+  const k=[1,4,7,4,1,4,16,26,16,4,7,26,41,26,7,4,16,26,16,4,1,4,7,4,1], ksum=273;
+  const out=new Uint8Array(w*h);
+  for(let y=2;y<h-2;y++) for(let x=2;x<w-2;x++){
+    let s=0;
+    for(let ky=0;ky<5;ky++) for(let kx=0;kx<5;kx++) s+=gray[(y+ky-2)*w+(x+kx-2)]*k[ky*5+kx];
+    out[y*w+x]=s/ksum;
   }
-  if (!found) return { x: 0, y: 0, w: w, h: h };
-  const margin = 20;
-  return {
-    x: Math.max(0, minX - margin),
-    y: Math.max(0, minY - margin),
-    w: Math.min(w, maxX + margin) - Math.max(0, minX - margin),
-    h: Math.min(h, maxY + margin) - Math.max(0, minY - margin)
-  };
+  return out;
 }
+
+function detectDocumentCorners(srcCanvas) {
+  const DW=500, scale=Math.min(DW/srcCanvas.width,1);
+  const dw=Math.round(srcCanvas.width*scale), dh=Math.round(srcCanvas.height*scale);
+  const small=document.createElement('canvas'); small.width=dw; small.height=dh;
+  small.getContext('2d').drawImage(srcCanvas,0,0,dw,dh);
+  const data=small.getContext('2d').getImageData(0,0,dw,dh).data;
+  const gray=new Uint8Array(dw*dh);
+  for(let i=0;i<data.length;i+=4) gray[i>>2]=data[i]*.299+data[i+1]*.587+data[i+2]*.114;
+  const bl=gaussBlur5(gray,dw,dh);
+  const edges=new Uint8Array(dw*dh);
+  for(let y=1;y<dh-1;y++) for(let x=1;x<dw-1;x++){
+    const gx=-bl[(y-1)*dw+x-1]-2*bl[y*dw+x-1]-bl[(y+1)*dw+x-1]
+             +bl[(y-1)*dw+x+1]+2*bl[y*dw+x+1]+bl[(y+1)*dw+x+1];
+    const gy=-bl[(y-1)*dw+x-1]-2*bl[(y-1)*dw+x]-bl[(y-1)*dw+x+1]
+             +bl[(y+1)*dw+x-1]+2*bl[(y+1)*dw+x]+bl[(y+1)*dw+x+1];
+    if(gx*gx+gy*gy>400) edges[y*dw+x]=1;
+  }
+  const m=Math.round(dw*.02);
+  let tlS=Infinity,brS=-Infinity,trD=-Infinity,blD=Infinity;
+  let tl=[m,m],tr=[dw-m,m],br=[dw-m,dh-m],bl2=[m,dh-m];
+  for(let y=m;y<dh-m;y++) for(let x=m;x<dw-m;x++){
+    if(!edges[y*dw+x]) continue;
+    const s=x+y,d=x-y;
+    if(s<tlS){tlS=s;tl=[x,y];}
+    if(s>brS){brS=s;br=[x,y];}
+    if(d>trD){trD=d;tr=[x,y];}
+    if(d<blD){blD=d;bl2=[x,y];}
+  }
+  const inv=1/scale;
+  return [tl,tr,br,bl2].map(([x,y])=>[x*inv,y*inv]);
+}
+
+function gaussElim(A,b){
+  const n=b.length, M=A.map((r,i)=>[...r,b[i]]);
+  for(let c=0;c<n;c++){
+    let max=c;
+    for(let r=c+1;r<n;r++) if(Math.abs(M[r][c])>Math.abs(M[max][c])) max=r;
+    [M[c],M[max]]=[M[max],M[c]];
+    for(let r=c+1;r<n;r++){const f=M[r][c]/M[c][c];for(let j=c;j<=n;j++) M[r][j]-=f*M[c][j];}
+  }
+  const x=new Array(n).fill(0);
+  for(let i=n-1;i>=0;i--){x[i]=M[i][n]/M[i][i];for(let j=0;j<i;j++) M[j][n]-=M[j][i]*x[i];}
+  return x;
+}
+
+function computeHomography(src4,dst4){
+  const A=[],b=[];
+  for(let i=0;i<4;i++){
+    const [x,y]=src4[i],[X,Y]=dst4[i];
+    A.push([x,y,1,0,0,0,-X*x,-X*y]); b.push(X);
+    A.push([0,0,0,x,y,1,-Y*x,-Y*y]); b.push(Y);
+  }
+  return gaussElim(A,b);
+}
+
+function perspectiveWarp(srcCanvas, corners){
+  const [tl,tr,br,bl]=corners;
+  const ow=Math.round(Math.max(Math.hypot(tr[0]-tl[0],tr[1]-tl[1]),Math.hypot(br[0]-bl[0],br[1]-bl[1])));
+  const oh=Math.round(Math.max(Math.hypot(bl[0]-tl[0],bl[1]-tl[1]),Math.hypot(br[0]-tr[0],br[1]-tr[1])));
+  const H=computeHomography([[0,0],[ow,0],[ow,oh],[0,oh]],[tl,tr,br,bl]);
+  const [h0,h1,h2,h3,h4,h5,h6,h7]=H;
+  const out=document.createElement('canvas'); out.width=ow; out.height=oh;
+  const outCtx=out.getContext('2d');
+  const outData=outCtx.createImageData(ow,oh);
+  const srcD=srcCanvas.getContext('2d').getImageData(0,0,srcCanvas.width,srcCanvas.height).data;
+  const sw=srcCanvas.width,sh=srcCanvas.height;
+  for(let dy=0;dy<oh;dy++) for(let dx=0;dx<ow;dx++){
+    const ww=h6*dx+h7*dy+1;
+    const sx=(h0*dx+h1*dy+h2)/ww, sy=(h3*dx+h4*dy+h5)/ww;
+    if(sx<0||sx>=sw-1||sy<0||sy>=sh-1) continue;
+    const x0=sx|0,y0=sy|0,fx=sx-x0,fy=sy-y0;
+    const i00=(y0*sw+x0)*4,i10=(y0*sw+x0+1)*4,i01=((y0+1)*sw+x0)*4,i11=((y0+1)*sw+x0+1)*4;
+    const oi=(dy*ow+dx)*4;
+    const a0=(1-fx)*(1-fy),a1=fx*(1-fy),a2=(1-fx)*fy,a3=fx*fy;
+    outData.data[oi]  =srcD[i00]*a0+srcD[i10]*a1+srcD[i01]*a2+srcD[i11]*a3;
+    outData.data[oi+1]=srcD[i00+1]*a0+srcD[i10+1]*a1+srcD[i01+1]*a2+srcD[i11+1]*a3;
+    outData.data[oi+2]=srcD[i00+2]*a0+srcD[i10+2]*a1+srcD[i01+2]*a2+srcD[i11+2]*a3;
+    outData.data[oi+3]=255;
+  }
+  outCtx.putImageData(outData,0,0);
+  return out;
+}
+
 async function processImage(file) {
   return new Promise(resolve => {
     if (file.type === 'application/pdf') { resolve(file); return; }
@@ -612,41 +686,33 @@ async function processImage(file) {
     const url = URL.createObjectURL(file);
     img.onload = () => {
       URL.revokeObjectURL(url);
-      const canvas = document.getElementById('proc-canvas');
-      const ctx    = canvas.getContext('2d');
-      const sw = img.naturalWidth, sh = img.naturalHeight;
+      let sw=img.naturalWidth, sh=img.naturalHeight;
       const isLand = CFG.rotate && sw > sh;
-      let dw = isLand ? sh : sw, dh = isLand ? sw : sh;
-      canvas.width = dw; canvas.height = dh;
-      ctx.save();
-      if (isLand) {
-        ctx.translate(dw/2, dh/2); ctx.rotate(Math.PI/2);
-        ctx.drawImage(img, -dh/2, -dw/2, dh, dw);
-      } else {
-        ctx.drawImage(img, 0, 0, dw, dh);
-      }
-      ctx.restore();
-      const id = ctx.getImageData(0, 0, dw, dh);
-      const bounds = findDocumentBounds(id);
-      const cropped = ctx.getImageData(bounds.x, bounds.y, bounds.w, bounds.h);
-      const tmp = document.createElement('canvas');
-      tmp.width = bounds.w; tmp.height = bounds.h;
-      tmp.getContext('2d').putImageData(cropped, 0, 0);
-      dw = bounds.w; dh = bounds.h;
-      const scale = Math.min(FAX_W / dw, FAX_H / dh);
-      const ow = Math.round(dw * scale), oh = Math.round(dh * scale);
-      canvas.width = ow; canvas.height = oh;
-      ctx.drawImage(tmp, 0, 0, dw, dh, 0, 0, ow, oh);
-      if (CFG.bw) {
-        const idata = ctx.getImageData(0,0,ow,oh), d = idata.data;
-        for (let i=0;i<d.length;i+=4) {
-          let g = .299*d[i] + .587*d[i+1] + .114*d[i+2];
-          if (CFG.contrast) g = Math.min(255, Math.max(0, (g-128)*1.4+128));
+      const raw=document.createElement('canvas');
+      raw.width=isLand?sh:sw; raw.height=isLand?sw:sh;
+      const rctx=raw.getContext('2d');
+      rctx.save();
+      if(isLand){rctx.translate(raw.width/2,raw.height/2);rctx.rotate(Math.PI/2);rctx.drawImage(img,-raw.height/2,-raw.width/2,raw.height,raw.width);}
+      else rctx.drawImage(img,0,0);
+      rctx.restore();
+      const corners=detectDocumentCorners(raw);
+      const warped=perspectiveWarp(raw,corners);
+      const scale=Math.min(FAX_W/warped.width,FAX_H/warped.height);
+      const ow=Math.round(warped.width*scale), oh=Math.round(warped.height*scale);
+      const out=document.getElementById('proc-canvas');
+      out.width=ow; out.height=oh;
+      const ctx=out.getContext('2d');
+      ctx.drawImage(warped,0,0,ow,oh);
+      if(CFG.bw){
+        const idata=ctx.getImageData(0,0,ow,oh),d=idata.data;
+        for(let i=0;i<d.length;i+=4){
+          let g=.299*d[i]+.587*d[i+1]+.114*d[i+2];
+          if(CFG.contrast) g=Math.min(255,Math.max(0,(g-128)*1.4+128));
           d[i]=d[i+1]=d[i+2]=g;
         }
         ctx.putImageData(idata,0,0);
       }
-      canvas.toBlob(b => resolve(b), 'image/jpeg', parseFloat(CFG.quality));
+      out.toBlob(b=>resolve(b),'image/jpeg',parseFloat(CFG.quality));
     };
     img.onerror = () => resolve(file);
     img.src = url;
