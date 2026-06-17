@@ -542,7 +542,7 @@ function updateBalanceChip(cents) {
 }
 async function checkBalance() {
   try {
-    const r = await fetch((CFG.proxy ? CFG.proxy.replace(/\//,'') : 'https://api.phaxio.com') + '/v2.1/account/status',
+    const r = await fetch((CFG.proxy ? CFG.proxy.replace(/\/$/, '') : 'https://api.phaxio.com') + '/v2.1/account/status',
       { headers: { 'Authorization': getAuth() } });
     const d = await r.json();
     if (d.success) updateBalanceChip(d.data?.balance ?? 0);

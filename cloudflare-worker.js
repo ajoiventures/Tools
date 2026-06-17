@@ -1,21 +1,16 @@
 /**
  * Fax Proxy — Cloudflare Worker
+ * Proxies requests from the browser to api.phaxio.com, adding CORS headers.
  *
- * Sits between your browser and the Phaxio API to fix CORS.
- * Browser  →  https://your-worker.workers.dev/v2.1/faxes
- * Worker   →  https://api.phaxio.com/v2.1/faxes
- *
- * HOW TO DEPLOY (no CLI needed):
- * 1. Go to https://dash.cloudflare.com → Workers & Pages → Create Application → Create Worker
- * 2. Delete the default code, paste this entire file
- * 3. Click "Save and Deploy"
- * 4. Copy the *.workers.dev URL shown at the top
- * 5. Open the Fax app → Settings → paste that URL into "Cloudflare Worker URL"
+ * DEPLOY:
+ * 1. dash.cloudflare.com → Workers & Pages → Create → Create Worker
+ * 2. Delete default code, paste this entire file, click Deploy
+ * 3. Copy the *.workers.dev URL → paste into Fax App Settings → Cloudflare Worker URL
  */
 
-const PHAXIO_BASE = "https://api.phaxio.com";
+const PHAXIO = "https://api.phaxio.com";
 
-const CORS = {
+const CORS_HEADERS = {
   "Access-Control-Allow-Origin":  "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Authorization, Content-Type",
@@ -25,31 +20,38 @@ const CORS = {
 export default {
   async fetch(request) {
 
-    // Handle preflight
+    // Preflight
     if (request.method === "OPTIONS") {
-      return new Response(null, { status: 204, headers: CORS });
+      return new Response(null, { status: 204, headers: CORS_HEADERS });
     }
 
-    // Build the upstream URL: strip worker origin, forward path + query
     const url      = new URL(request.url);
-    const upstream = new URL(PHAXIO_BASE + url.pathname + url.search);
+    const upstream = PHAXIO + url.pathname + url.search;
 
-    // Forward the request as-is (auth header comes from the browser)
-    const proxied = new Request(upstream, {
-      method:  request.method,
-      headers: request.headers,
-      body:    request.method !== "GET" ? request.body : undefined,
-      // Required for multipart file uploads
-      duplex:  "half",
-    });
+    // Forward headers — strip host so Phaxio doesn't reject it
+    const headers = new Headers();
+    for (const [key, val] of request.headers.entries()) {
+      if (key.toLowerCase() !== "host") headers.set(key, val);
+    }
 
-    const response = await fetch(proxied);
+    const init = {
+      method:   request.method,
+      headers,
+      redirect: "follow",
+    };
 
-    // Return Phaxio's response + CORS headers
-    return new Response(response.body, {
-      status:  response.status,
-      headers: { ...Object.fromEntries(response.headers), ...CORS },
-    });
+    // Attach body for non-GET requests (file uploads, form posts)
+    if (!["GET", "HEAD"].includes(request.method)) {
+      init.body = request.body;
+    }
 
+    const resp = await fetch(upstream, init);
+
+    // Rebuild response with CORS headers added
+    const body    = await resp.arrayBuffer();
+    const outHdrs = new Headers(resp.headers);
+    for (const [k, v] of Object.entries(CORS_HEADERS)) outHdrs.set(k, v);
+
+    return new Response(body, { status: resp.status, headers: outHdrs });
   },
 };
