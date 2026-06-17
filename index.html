@@ -167,6 +167,10 @@ textarea{min-height:90px;}
 .crop-handle.tr{right:-13px;top:-13px;cursor:nesw-resize;}
 .crop-handle.br{right:-13px;bottom:-13px;cursor:nwse-resize;}
 .crop-handle.bl{left:-13px;bottom:-13px;cursor:nesw-resize;}
+.crop-handle.t{left:50%;top:-13px;transform:translateX(-50%);cursor:ns-resize;}
+.crop-handle.r{right:-13px;top:50%;transform:translateY(-50%);cursor:ew-resize;}
+.crop-handle.b{left:50%;bottom:-13px;transform:translateX(-50%);cursor:ns-resize;}
+.crop-handle.l{left:-13px;top:50%;transform:translateY(-50%);cursor:ew-resize;}
 .adjust-empty{color:var(--muted);font-size:13px;padding:24px;text-align:center;}
 #ocr-status{display:none;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);font-size:13px;}
 #ocr-status.show{display:flex;}
@@ -196,6 +200,25 @@ textarea{min-height:90px;}
 
 footer{padding:8px 16px;text-align:center;font-size:11px;color:var(--muted);border-top:2px solid #090805;background:#11110d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
+@media (min-width:761px){
+  body{grid-template-rows:86px 58px minmax(0,1fr) 42px;}
+  header{min-height:86px;padding:12px 26px;border:2px solid #090805;border-width:0 0 2px;}
+  header svg{width:38px;height:38px;}
+  header h1{font-size:50px;}
+  .steps{padding:10px 24px;gap:8px;}
+  .step-pill{clip-path:polygon(0 0,calc(100% - 18px) 0,100% 50%,calc(100% - 18px) 100%,0 100%,12px 50%);border-radius:0;min-height:38px;}
+  main{padding:16px 22px;}
+  #step1.active{grid-template-columns:minmax(320px,370px) minmax(0,1fr);gap:14px;}
+  #step2.active{max-width:none;grid-template-columns:270px minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;grid-template-areas:"title title" "strip preview" "tools nav";}
+  #step2 h2{grid-area:title;}
+  #adjust-strip{grid-area:strip;display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));align-content:start;overflow-y:auto;overflow-x:hidden;background:#11110d;border:2px solid var(--border);border-radius:var(--radius);padding:10px;}
+  #step2 .adjust-preview{grid-area:preview;}
+  #step2 .crop-tools{grid-area:tools;}
+  #step2 .step-nav{grid-area:nav;}
+  .thumb-strip img{width:58px;height:78px;}
+  .adjust-stage img{max-height:calc(100dvh - 260px);}
+}
+
 @media (max-width:760px){
   body{grid-template-rows:auto auto minmax(0,1fr) auto;}
   header{min-height:62px;padding:10px 12px;}
@@ -213,6 +236,17 @@ footer{padding:8px 16px;text-align:center;font-size:11px;color:var(--muted);bord
   #step1 #btn-next1{margin:0;width:100%;}
   #step1 .page-count{margin:8px 0;grid-area:tray;}
   #step1 .page-grid{padding:48px 10px 10px;}
+  #step2.active{grid-template-rows:auto auto minmax(0,1fr) auto auto;}
+  .adjust-preview{min-height:0;}
+  .crop-handle{width:30px;height:30px;border-width:4px;}
+  .crop-handle.tl{left:-16px;top:-16px;}
+  .crop-handle.tr{right:-16px;top:-16px;}
+  .crop-handle.br{right:-16px;bottom:-16px;}
+  .crop-handle.bl{left:-16px;bottom:-16px;}
+  .crop-handle.t{top:-16px;}
+  .crop-handle.r{right:-16px;}
+  .crop-handle.b{bottom:-16px;}
+  .crop-handle.l{left:-16px;}
   .btn-camera,.btn{padding:11px 10px;font-size:12px;}
 }
 
@@ -489,12 +523,12 @@ footer{padding:8px 16px;text-align:center;font-size:11px;color:var(--muted);bord
     <div class="adjust-preview" id="adjust-preview">
       <div class="adjust-empty">Select a page to preview</div>
     </div>
-    <div class="btn-row">
+    <div class="btn-row crop-tools">
       <button class="btn btn-ghost" onclick="autoFitAdjustCrop()">Auto fit</button>
       <button class="btn btn-ghost" onclick="fullPageAdjustCrop()">Full page</button>
       <button class="btn btn-primary" onclick="applyAdjustCrop()">Apply Crop</button>
     </div>
-    <div class="btn-row">
+    <div class="btn-row step-nav">
       <button class="btn btn-ghost" onclick="goStep(1)">Back</button>
       <button class="btn btn-primary" onclick="finishAdjust()">Review Text -></button>
     </div>
@@ -1108,8 +1142,8 @@ function getCropBox() {
 
 function clampCrop(r) {
   const min=.06;
-  let x=Math.max(0,Math.min(.98,r.x)), y=Math.max(0,Math.min(.98,r.y));
-  let w=Math.max(min,Math.min(1-x,r.w)), h=Math.max(min,Math.min(1-y,r.h));
+  let w=Math.max(min,Math.min(1,r.w)), h=Math.max(min,Math.min(1,r.h));
+  let x=Math.max(0,Math.min(1-w,r.x)), y=Math.max(0,Math.min(1-h,r.y));
   return {x,y,w,h};
 }
 
@@ -1128,7 +1162,7 @@ function drawAdjustCrop() {
     height:(r.h*img.clientHeight)+'px'
   });
   box.addEventListener('pointerdown',e=>startAdjustDrag(e,'move'));
-  ['tl','tr','br','bl'].forEach(pos=>{
+  ['tl','t','tr','r','br','b','bl','l'].forEach(pos=>{
     const h=document.createElement('span');
     h.className='crop-handle '+pos;
     h.addEventListener('pointerdown',e=>startAdjustDrag(e,pos));
