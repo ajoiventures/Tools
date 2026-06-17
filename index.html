@@ -6,152 +6,122 @@
 <title>IRS Fax Sender</title>
 <style>
   :root {
-    --bg: #0f0f13;
-    --surface: #1a1a22;
-    --surface2: #22222e;
-    --border: #2e2e3e;
-    --accent: #6c63ff;
-    --accent2: #4ade80;
-    --danger: #f87171;
-    --text: #e8e8f0;
-    --muted: #8888a8;
-    --radius: 14px;
+    --bg:#0f0f13;--surface:#1a1a22;--surface2:#22222e;--border:#2e2e3e;
+    --accent:#6c63ff;--accent2:#4ade80;--danger:#f87171;--warn:#fbbf24;
+    --text:#e8e8f0;--muted:#8888a8;--radius:14px;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100dvh; display: flex; flex-direction: column; }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100dvh;display:flex;flex-direction:column;}
+  header{padding:16px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+  header h1{font-size:18px;font-weight:700;}
+  header p{font-size:12px;color:var(--muted);margin-top:1px;}
+  .balance-chip{margin-left:auto;font-size:11px;font-weight:700;padding:4px 10px;border-radius:99px;background:var(--surface2);border:1px solid var(--border);white-space:nowrap;}
+  .balance-chip.ok{color:var(--accent2);border-color:rgba(74,222,128,.3);}
+  .balance-chip.low{color:var(--warn);border-color:rgba(251,191,36,.3);}
+  .balance-chip.empty{color:var(--danger);border-color:rgba(248,113,113,.3);}
 
-  header { padding: 16px 20px 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
-  header h1 { font-size: 18px; font-weight: 700; }
-  header p  { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .steps{display:flex;padding:12px 20px;gap:6px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border);}
+  .step-pill{display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:99px;font-size:12px;font-weight:600;white-space:nowrap;background:var(--surface2);color:var(--muted);}
+  .step-pill.active{background:var(--accent);color:#fff;}
+  .step-pill.done{color:var(--accent2);}
+  .step-pill .num{width:17px;height:17px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:10px;}
 
-  .steps { display: flex; padding: 12px 20px; gap: 6px; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--border); }
-  .step-pill { display: flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 99px; font-size: 12px; font-weight: 600; white-space: nowrap; background: var(--surface2); color: var(--muted); }
-  .step-pill.active { background: var(--accent); color: #fff; }
-  .step-pill.done   { color: var(--accent2); }
-  .step-pill .num   { width: 17px; height: 17px; border-radius: 50%; background: rgba(255,255,255,.15); display: flex; align-items: center; justify-content: center; font-size: 10px; }
+  main{flex:1;padding:20px;max-width:540px;width:100%;margin:0 auto;}
+  .panel{display:none;flex-direction:column;gap:16px;}
+  .panel.active{display:flex;}
+  h2{font-size:17px;font-weight:700;}
+  p.sub{font-size:13px;color:var(--muted);line-height:1.5;}
 
-  main { flex: 1; padding: 20px; max-width: 540px; width: 100%; margin: 0 auto; }
-  .panel { display: none; flex-direction: column; gap: 16px; }
-  .panel.active { display: flex; }
-  h2 { font-size: 17px; font-weight: 700; }
-  p.sub { font-size: 13px; color: var(--muted); line-height: 1.5; }
+  /* Processing banner */
+  .proc-banner{display:none;align-items:center;gap:10px;padding:10px 14px;background:rgba(108,99,255,.1);border:1px solid rgba(108,99,255,.3);border-radius:var(--radius);font-size:13px;}
+  .proc-banner.show{display:flex;}
+  .spinner{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--accent);animation:spin .7s linear infinite;flex-shrink:0;}
+  @keyframes spin{to{transform:rotate(360deg);}}
 
-  /* ── Page grid ── */
-  .page-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-  }
-  .page-thumb {
-    position: relative;
-    border-radius: 10px;
-    overflow: hidden;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    aspect-ratio: 3/4;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .page-thumb img {
-    width: 100%; height: 100%; object-fit: cover;
-  }
-  .page-thumb .pg-num {
-    position: absolute; top: 5px; left: 5px;
-    background: rgba(0,0,0,.7); color: #fff;
-    font-size: 10px; font-weight: 700;
-    padding: 2px 6px; border-radius: 99px;
-  }
-  .page-thumb .pg-del {
-    position: absolute; top: 5px; right: 5px;
-    background: rgba(248,113,113,.85); color: #fff;
-    border: none; border-radius: 50%;
-    width: 22px; height: 22px; cursor: pointer;
-    font-size: 13px; display: flex; align-items: center; justify-content: center;
-    font-weight: 700;
-  }
+  /* Grid */
+  .cam-row{display:flex;gap:10px;}
+  .btn-camera{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:14px;font-weight:600;cursor:pointer;position:relative;}
+  .btn-camera input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
 
-  /* Add page tile */
-  .add-tile {
-    border-radius: 10px;
-    border: 2px dashed var(--border);
-    aspect-ratio: 3/4;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    gap: 6px; cursor: pointer;
-    color: var(--muted); font-size: 11px; font-weight: 600;
-    position: relative; transition: border-color .2s;
-  }
-  .add-tile:hover { border-color: var(--accent); color: var(--accent); }
-  .add-tile input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-  .add-tile .big  { font-size: 28px; }
+  .page-count{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--muted);}
+  .page-count strong{color:var(--text);}
+  .badge{background:var(--accent);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;}
 
-  /* Camera row */
-  .cam-row { display: flex; gap: 10px; }
-  .btn-camera {
-    flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
-    padding: 14px; border-radius: var(--radius);
-    border: 1px solid var(--border); background: var(--surface);
-    color: var(--text); font-size: 14px; font-weight: 600;
-    cursor: pointer; position: relative;
-  }
-  .btn-camera input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .page-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+  .page-thumb{position:relative;border-radius:10px;overflow:hidden;background:var(--surface2);border:1px solid var(--border);aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;}
+  .page-thumb img{width:100%;height:100%;object-fit:cover;}
+  .page-thumb .pg-num{position:absolute;top:5px;left:5px;background:rgba(0,0,0,.7);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:99px;}
+  .page-thumb .pg-del{position:absolute;top:5px;right:5px;background:rgba(248,113,113,.9);color:#fff;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-weight:700;}
+  .page-thumb .pg-processing{position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:11px;color:#fff;}
 
-  /* Count badge */
-  .page-count {
-    display: flex; align-items: center; justify-content: space-between;
-    font-size: 13px; color: var(--muted);
-  }
-  .page-count strong { color: var(--text); }
-  .badge { background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 99px; }
+  .add-tile{border-radius:10px;border:2px dashed var(--border);aspect-ratio:3/4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;color:var(--muted);font-size:11px;font-weight:600;position:relative;transition:border-color .2s;}
+  .add-tile:hover{border-color:var(--accent);color:var(--accent);}
+  .add-tile input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+  .add-tile .big{font-size:28px;}
 
   /* Fields */
-  .field-label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
-  textarea, select, input[type=text] { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: inherit; padding: 12px 14px; font-size: 14px; resize: vertical; outline: none; transition: border-color .2s; }
-  textarea:focus, select:focus, input[type=text]:focus { border-color: var(--accent); }
-  select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238888a8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; cursor: pointer; }
-  select option { background: var(--surface2); }
-  textarea { min-height: 100px; }
+  .field-label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+  textarea,select,input[type=text]{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:inherit;padding:12px 14px;font-size:14px;resize:vertical;outline:none;transition:border-color .2s;}
+  textarea:focus,select:focus,input[type=text]:focus{border-color:var(--accent);}
+  select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238888a8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;cursor:pointer;}
+  select option{background:var(--surface2);}
+  textarea{min-height:100px;}
 
   /* Buttons */
-  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 15px 20px; border-radius: var(--radius); font-size: 15px; font-weight: 700; cursor: pointer; border: none; width: 100%; transition: opacity .2s; }
-  .btn:disabled { opacity: .4; cursor: not-allowed; }
-  .btn:active:not(:disabled) { opacity: .85; }
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-success { background: var(--accent2); color: #0f0f13; }
-  .btn-ghost   { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-  .btn-row { display: flex; gap: 10px; }
-  .btn-row .btn { flex: 1; }
+  .btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:15px 20px;border-radius:var(--radius);font-size:15px;font-weight:700;cursor:pointer;border:none;width:100%;transition:opacity .2s;}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+  .btn:active:not(:disabled){opacity:.85;}
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-success{background:var(--accent2);color:#0f0f13;}
+  .btn-ghost{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+  .btn-row{display:flex;gap:10px;}
+  .btn-row .btn{flex:1;}
 
-  .info-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; font-size: 13px; color: var(--muted); line-height: 1.6; }
-  .info-box strong { color: var(--text); }
+  .info-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;font-size:13px;color:var(--muted);line-height:1.6;}
+  .info-box strong{color:var(--text);}
 
-  .summary-row { display: flex; justify-content: space-between; font-size: 13px; padding: 11px 16px; border-bottom: 1px solid var(--border); gap: 12px; }
-  .summary-row:last-child { border-bottom: none; }
-  .summary-row .lbl { color: var(--muted); flex-shrink: 0; }
-  .summary-row .val { color: var(--text); font-weight: 500; text-align: right; word-break: break-all; }
+  /* Summary */
+  .summary-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  .summary-row{display:flex;justify-content:space-between;font-size:13px;padding:11px 16px;border-bottom:1px solid var(--border);gap:12px;}
+  .summary-row:last-child{border-bottom:none;}
+  .summary-row .lbl{color:var(--muted);flex-shrink:0;}
+  .summary-row .val{color:var(--text);font-weight:500;text-align:right;word-break:break-all;}
 
-  .result-card { border-radius: var(--radius); padding: 20px; display: flex; flex-direction: column; gap: 8px; border: 1px solid; }
-  .result-card.success { background: rgba(74,222,128,.08); border-color: rgba(74,222,128,.3); }
-  .result-card.error   { background: rgba(248,113,113,.08); border-color: rgba(248,113,113,.3); }
-  .result-card h3 { font-size: 16px; font-weight: 700; }
-  .result-card.success h3 { color: var(--accent2); }
-  .result-card.error   h3 { color: var(--danger); }
-  .result-card p { font-size: 13px; color: var(--muted); }
-  .fax-id { font-family: monospace; font-size: 13px; background: var(--surface2); padding: 6px 10px; border-radius: 8px; display: inline-block; margin-top: 4px; }
+  /* Thumb strip */
+  .thumb-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;}
+  .thumb-strip img{height:64px;width:48px;object-fit:cover;border-radius:6px;border:2px solid transparent;cursor:pointer;flex-shrink:0;}
+  .thumb-strip img.active{border-color:var(--accent);}
 
   /* OCR status */
-  #ocr-status { display: none; align-items: center; gap: 10px; padding: 12px 16px; background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); font-size: 13px; }
-  #ocr-status.show { display: flex; }
-  .spinner { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border); border-top-color: var(--accent); animation: spin .7s linear infinite; flex-shrink: 0; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  #ocr-status{display:none;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);font-size:13px;}
+  #ocr-status.show{display:flex;}
 
-  /* Thumb strip on review page */
-  .thumb-strip { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
-  .thumb-strip img { height: 60px; width: 45px; object-fit: cover; border-radius: 6px; border: 2px solid transparent; cursor: pointer; flex-shrink: 0; }
-  .thumb-strip img.active { border-color: var(--accent); }
+  /* Result */
+  .result-card{border-radius:var(--radius);padding:20px;display:flex;flex-direction:column;gap:10px;border:1px solid;}
+  .result-card.success{background:rgba(74,222,128,.08);border-color:rgba(74,222,128,.3);}
+  .result-card.error{background:rgba(248,113,113,.08);border-color:rgba(248,113,113,.3);}
+  .result-card.pending{background:rgba(108,99,255,.08);border-color:rgba(108,99,255,.3);}
+  .result-card h3{font-size:16px;font-weight:700;}
+  .result-card.success h3{color:var(--accent2);}
+  .result-card.error   h3{color:var(--danger);}
+  .result-card.pending h3{color:var(--accent);}
+  .result-card p{font-size:13px;color:var(--muted);line-height:1.5;}
+  .fax-id{font-family:monospace;font-size:13px;background:var(--surface2);padding:6px 10px;border-radius:8px;display:inline-block;}
 
-  footer { padding: 14px 20px; text-align: center; font-size: 11px; color: var(--muted); border-top: 1px solid var(--border); }
+  /* Delivery tracker */
+  .delivery-track{display:flex;flex-direction:column;gap:8px;}
+  .delivery-step{display:flex;align-items:center;gap:10px;font-size:13px;}
+  .delivery-step .dot{width:10px;height:10px;border-radius:50%;background:var(--border);flex-shrink:0;}
+  .delivery-step.done .dot{background:var(--accent2);}
+  .delivery-step.active .dot{background:var(--accent);animation:pulse 1s infinite;}
+  .delivery-step.failed .dot{background:var(--danger);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+  .delivery-step .dlabel{color:var(--muted);}
+  .delivery-step.done .dlabel{color:var(--text);}
+  .delivery-step.active .dlabel{color:var(--accent);}
+  .delivery-step.failed .dlabel{color:var(--danger);}
+
+  footer{padding:14px 20px;text-align:center;font-size:11px;color:var(--muted);border-top:1px solid var(--border);}
 </style>
 </head>
 <body>
@@ -166,10 +136,11 @@
     <h1>IRS Fax Sender</h1>
     <p>Scan multiple pages &amp; fax in one shot</p>
   </div>
+  <div class="balance-chip" id="balance-chip" title="Sinch account balance">⏳ Balance</div>
 </header>
 
 <div class="steps">
-  <div class="step-pill active" data-step="1"><span class="num">1</span> Scan Pages</div>
+  <div class="step-pill active" data-step="1"><span class="num">1</span> Scan</div>
   <div class="step-pill" data-step="2"><span class="num">2</span> Review</div>
   <div class="step-pill" data-step="3"><span class="num">3</span> Details</div>
   <div class="step-pill" data-step="4"><span class="num">4</span> Send</div>
@@ -177,12 +148,11 @@
 
 <main>
 
-  <!-- STEP 1: Capture pages -->
+  <!-- STEP 1: Capture -->
   <div class="panel active" id="step1">
     <h2>Scan Your Pages</h2>
-    <p class="sub">Take photos one by one or upload files. Pages will be faxed in the order shown.</p>
+    <p class="sub">Take photos one by one. Each image is auto-cropped, resized, and converted to fax-ready B&amp;W.</p>
 
-    <!-- Camera buttons -->
     <div class="cam-row">
       <label class="btn-camera">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
@@ -195,26 +165,29 @@
       </label>
     </div>
 
-    <!-- Page count -->
+    <div class="proc-banner" id="proc-banner">
+      <div class="spinner"></div>
+      <span id="proc-msg">Processing image…</span>
+    </div>
+
     <div class="page-count" id="page-count" style="display:none">
-      <span>Pages captured: <strong id="pg-num">0</strong></span>
+      <span>Pages ready: <strong id="pg-num">0</strong></span>
       <span class="badge" id="pg-badge">0 pages</span>
     </div>
 
-    <!-- Thumbnail grid -->
     <div class="page-grid" id="page-grid"></div>
 
     <div id="no-pages" class="info-box" style="text-align:center;padding:24px 16px">
-      📷 No pages yet — use Camera or Upload above
+      📷 No pages yet — tap Camera or Upload
     </div>
 
     <button class="btn btn-primary" id="btn-next1" disabled>Review Pages →</button>
   </div>
 
-  <!-- STEP 2: Review OCR -->
+  <!-- STEP 2: Review -->
   <div class="panel" id="step2">
     <h2>Review Pages</h2>
-    <p class="sub">Tap a thumbnail to preview. OCR text is for your check only — original images are faxed.</p>
+    <p class="sub">Tap a thumbnail to check the processed image and its OCR text.</p>
 
     <div class="thumb-strip" id="thumb-strip"></div>
 
@@ -224,9 +197,11 @@
     </div>
 
     <div>
-      <div class="field-label">OCR Text — Page <span id="ocr-page-label">1</span></div>
-      <textarea id="ocr-text" rows="8" placeholder="Select a page above to see its text…" readonly></textarea>
+      <div class="field-label">Extracted Text — Page <span id="ocr-page-label">1</span></div>
+      <textarea id="ocr-text" rows="7" placeholder="Select a page above…" readonly></textarea>
     </div>
+
+    <div class="info-box">💡 <strong>Tip:</strong> The processed (B&amp;W, cropped) image is what gets faxed. Text here is just your readability check.</div>
 
     <div class="btn-row">
       <button class="btn btn-ghost" onclick="goStep(1)">← Back</button>
@@ -234,10 +209,9 @@
     </div>
   </div>
 
-  <!-- STEP 3: Fax details -->
+  <!-- STEP 3: Details -->
   <div class="panel" id="step3">
     <h2>Fax Details</h2>
-    <p class="sub">Choose recipient and add an optional cover note.</p>
 
     <div>
       <div class="field-label">IRS Fax Number</div>
@@ -274,11 +248,16 @@
   <div class="panel" id="step4">
     <h2>Review &amp; Send</h2>
 
-    <div class="info-box" style="display:flex;flex-direction:column;gap:0;padding:0">
+    <div class="summary-box">
       <div class="summary-row"><span class="lbl">Pages</span><span class="val" id="sum-pages">—</span></div>
       <div class="summary-row"><span class="lbl">To</span><span class="val" id="sum-to">—</span></div>
       <div class="summary-row"><span class="lbl">Cover</span><span class="val" id="sum-cover">—</span></div>
       <div class="summary-row"><span class="lbl">Est. cost</span><span class="val" id="sum-cost">—</span></div>
+      <div class="summary-row"><span class="lbl">Balance</span><span class="val" id="sum-balance">—</span></div>
+    </div>
+
+    <div id="balance-warn" style="display:none" class="info-box" style="border-color:rgba(251,191,36,.4)">
+      ⚠️ <strong>Low balance.</strong> Top up at <a href="https://console.sinch.com" target="_blank" style="color:var(--accent)">console.sinch.com</a> to avoid send failure.
     </div>
 
     <div id="result-area"></div>
@@ -293,23 +272,412 @@
 
 <footer>Powered by Sinch / Phaxio &nbsp;·&nbsp; ajoiventures</footer>
 
+<!-- Hidden canvas for image processing -->
+<canvas id="proc-canvas" style="display:none"></canvas>
+
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>
 // ── Credentials ───────────────────────────────────────────────────────────────
 const API_KEY    = "d633c79a-c3db-40ce-8298-8b385d0799cb";
 const API_SECRET = "q_IyRpb3MqmGB5rJY2bGnXt-dG";
+const AUTH       = 'Basic ' + btoa(API_KEY + ':' + API_SECRET);
+
+// Fax standard: 1728px wide at 196 DPI = US Letter portrait
+const FAX_WIDTH  = 1728;
+const FAX_HEIGHT = 2236; // letter ratio
 
 // ── State ─────────────────────────────────────────────────────────────────────
-let pages = [];       // [{file, url, ocr}]
-let currentStep = 1;
-let ocrCache = {};    // index → text
+let pages       = [];    // [{blob, url, ocr}]
+let ocrCache    = {};
+let currentBal  = null;
+let pollTimer   = null;
 
-// ── Navigation ────────────────────────────────────────────────────────────────
+// ── Balance check (runs on load) ──────────────────────────────────────────────
+async function checkBalance() {
+  const chip = document.getElementById('balance-chip');
+  try {
+    const r = await fetch('https://api.phaxio.com/v2.1/public/countries', {
+      headers: { 'Authorization': AUTH }
+    });
+    // We can't directly get balance via simple CORS-safe endpoint,
+    // so try the account endpoint
+    const r2 = await fetch('https://api.phaxio.com/v2.1/account/status', {
+      headers: { 'Authorization': AUTH }
+    });
+    if (!r2.ok) throw new Error('CORS blocked');
+    const d = await r2.json();
+    const bal = d.data?.balance ?? null; // in cents
+    currentBal = bal;
+    if (bal === null) throw new Error('No balance data');
+    const dollars = (bal / 100).toFixed(2);
+    chip.textContent = `$${dollars}`;
+    chip.className   = 'balance-chip ' + (bal > 100 ? 'ok' : bal > 0 ? 'low' : 'empty');
+    document.getElementById('sum-balance').textContent = `$${dollars}`;
+    if (bal < 100) document.getElementById('balance-warn').style.display = 'block';
+  } catch (e) {
+    chip.textContent = '⚠️ CORS';
+    chip.className   = 'balance-chip low';
+    chip.title       = 'Cannot check balance from browser — API may block direct calls. Fax may still work.';
+    document.getElementById('sum-balance').textContent = 'Cannot verify (CORS)';
+  }
+}
+checkBalance();
+
+// ── Image processing ──────────────────────────────────────────────────────────
+async function processImage(file) {
+  return new Promise((resolve) => {
+    if (file.type === 'application/pdf') {
+      // PDFs pass through unchanged
+      resolve(file);
+      return;
+    }
+
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+
+      const canvas = document.getElementById('proc-canvas');
+      const ctx    = canvas.getContext('2d');
+
+      // Determine scale — fit to fax letter size, preserve aspect ratio
+      const srcW = img.naturalWidth;
+      const srcH = img.naturalHeight;
+
+      // Auto-rotate: if image is wider than tall (landscape), rotate 90°
+      const isLandscape = srcW > srcH;
+      const drawW = isLandscape ? srcH : srcW;
+      const drawH = isLandscape ? srcW : srcH;
+
+      const scale  = Math.min(FAX_WIDTH / drawW, FAX_HEIGHT / drawH);
+      const outW   = Math.round(drawW * scale);
+      const outH   = Math.round(drawH * scale);
+
+      canvas.width  = outW;
+      canvas.height = outH;
+
+      ctx.save();
+      if (isLandscape) {
+        // Rotate portrait
+        ctx.translate(outW / 2, outH / 2);
+        ctx.rotate(Math.PI / 2);
+        ctx.drawImage(img, -outH / 2, -outW / 2, outH, outW);
+      } else {
+        ctx.drawImage(img, 0, 0, outW, outH);
+      }
+      ctx.restore();
+
+      // ── Grayscale + contrast boost ────────────────────────────────────────
+      const imageData = ctx.getImageData(0, 0, outW, outH);
+      const d = imageData.data;
+      for (let i = 0; i < d.length; i += 4) {
+        // Weighted grayscale (human perception)
+        let gray = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
+        // S-curve contrast: push midtones toward B&W
+        gray = Math.min(255, Math.max(0, (gray - 128) * 1.4 + 128));
+        d[i] = d[i+1] = d[i+2] = gray;
+      }
+      ctx.putImageData(imageData, 0, 0);
+
+      // Export as JPEG at 85% quality (good for fax, smaller file)
+      canvas.toBlob(blob => resolve(blob), 'image/jpeg', 0.85);
+    };
+    img.onerror = () => resolve(file); // fallback: use original
+    img.src = url;
+  });
+}
+
+// ── Add pages ─────────────────────────────────────────────────────────────────
+async function addFiles(files) {
+  const banner = document.getElementById('proc-banner');
+  const msg    = document.getElementById('proc-msg');
+  banner.classList.add('show');
+
+  for (const file of Array.from(files)) {
+    if (file.size > 20 * 1024 * 1024) { alert(`${file.name} too large (max 20 MB)`); continue; }
+    const idx = pages.length;
+    // Add placeholder
+    pages.push({ blob: null, url: URL.createObjectURL(file), ocr: null, processing: true });
+    renderGrid();
+
+    msg.textContent = `Processing page ${idx + 1}…`;
+    const processed = await processImage(file);
+    const url = URL.createObjectURL(processed);
+    URL.revokeObjectURL(pages[idx].url);
+    pages[idx] = { blob: processed, url, ocr: null, processing: false };
+    renderGrid();
+  }
+
+  banner.classList.remove('show');
+}
+
+document.getElementById('camera-input').addEventListener('change', e => { addFiles(e.target.files); e.target.value=''; });
+document.getElementById('file-input').addEventListener('change',  e => { addFiles(e.target.files); e.target.value=''; });
+
+// ── Grid render ───────────────────────────────────────────────────────────────
+function renderGrid() {
+  const grid  = document.getElementById('page-grid');
+  const none  = document.getElementById('no-pages');
+  const count = document.getElementById('page-count');
+  const ready = pages.filter(p => !p.processing);
+
+  grid.innerHTML = '';
+  none.style.display  = pages.length === 0 ? 'block' : 'none';
+  count.style.display = pages.length === 0 ? 'none' : 'flex';
+  document.getElementById('pg-num').textContent   = ready.length;
+  document.getElementById('pg-badge').textContent = ready.length + (ready.length === 1 ? ' page' : ' pages');
+  document.getElementById('btn-next1').disabled   = ready.length === 0;
+
+  pages.forEach((pg, i) => {
+    const thumb = document.createElement('div');
+    thumb.className = 'page-thumb';
+
+    const img = document.createElement('img');
+    img.src = pg.url;
+    img.alt = `Page ${i+1}`;
+
+    const num = document.createElement('span');
+    num.className = 'pg-num';
+    num.textContent = `P${i+1}`;
+
+    thumb.appendChild(img);
+    thumb.appendChild(num);
+
+    if (pg.processing) {
+      const ov = document.createElement('div');
+      ov.className = 'pg-processing';
+      ov.innerHTML = '<div class="spinner"></div><span>Processing…</span>';
+      thumb.appendChild(ov);
+    } else {
+      const del = document.createElement('button');
+      del.className = 'pg-del';
+      del.innerHTML = '×';
+      del.onclick = (e) => { e.stopPropagation(); deletePage(i); };
+      thumb.appendChild(del);
+    }
+
+    grid.appendChild(thumb);
+  });
+
+  // Add more tile
+  if (pages.length > 0 && !pages.some(p => p.processing)) {
+    const tile = document.createElement('label');
+    tile.className = 'add-tile';
+    tile.innerHTML = `<span class="big">＋</span><span>Add page</span><input type="file" accept="image/*" capture="environment">`;
+    tile.querySelector('input').addEventListener('change', e => { addFiles(e.target.files); e.target.value=''; });
+    grid.appendChild(tile);
+  }
+}
+
+function deletePage(i) {
+  URL.revokeObjectURL(pages[i].url);
+  pages.splice(i, 1);
+  const newCache = {};
+  Object.entries(ocrCache).forEach(([k,v]) => {
+    const n = +k;
+    if (n < i) newCache[n] = v;
+    else if (n > i) newCache[n-1] = v;
+  });
+  ocrCache = newCache;
+  renderGrid();
+}
+
+// ── Thumb strip (step 2) ──────────────────────────────────────────────────────
+function buildThumbStrip() {
+  const strip = document.getElementById('thumb-strip');
+  strip.innerHTML = '';
+  pages.forEach((pg, i) => {
+    const img = document.createElement('img');
+    img.src = pg.url;
+    img.alt = `Page ${i+1}`;
+    img.onclick = () => selectPage(i);
+    strip.appendChild(img);
+  });
+  selectPage(0);
+}
+
+function selectPage(i) {
+  document.querySelectorAll('.thumb-strip img').forEach((img, idx) => img.classList.toggle('active', idx === i));
+  document.getElementById('ocr-page-label').textContent = i + 1;
+
+  if (ocrCache[i] !== undefined) {
+    document.getElementById('ocr-text').value = ocrCache[i];
+    return;
+  }
+
+  const status = document.getElementById('ocr-status');
+  const msg    = document.getElementById('ocr-msg');
+  const ta     = document.getElementById('ocr-text');
+  ta.value = '';
+  status.classList.add('show');
+  msg.textContent = 'Reading text…';
+
+  if (!pages[i] || pages[i].blob?.type === 'application/pdf') {
+    ocrCache[i] = '(PDF — text not extracted in browser)';
+    ta.value = ocrCache[i];
+    status.classList.remove('show');
+    return;
+  }
+
+  Tesseract.createWorker('eng', 1, {
+    logger: m => { if (m.status === 'recognizing text') msg.textContent = `OCR ${Math.round(m.progress*100)}%…`; }
+  }).then(worker => {
+    worker.recognize(pages[i].blob).then(({ data: { text } }) => {
+      worker.terminate();
+      ocrCache[i] = text.trim() || '(No text detected — check image quality)';
+      if (+document.getElementById('ocr-page-label').textContent === i + 1)
+        ta.value = ocrCache[i];
+      msg.textContent = '✓ Done';
+      setTimeout(() => status.classList.remove('show'), 1500);
+    });
+  }).catch(() => {
+    ocrCache[i] = '(OCR failed)';
+    ta.value = ocrCache[i];
+    status.classList.remove('show');
+  });
+}
+
+// ── Fax helpers ───────────────────────────────────────────────────────────────
+function getFaxNumber() {
+  const v = document.getElementById('fax-select').value;
+  return v === 'custom' ? document.getElementById('custom-number').value : v;
+}
+function syncCustom() {
+  document.getElementById('custom-wrap').style.display =
+    document.getElementById('fax-select').value === 'custom' ? 'block' : 'none';
+}
+function fmtFax(n) {
+  const d = n.replace(/\D/g,'');
+  return d.length === 11 ? `+${d[0]} (${d.slice(1,4)}) ${d.slice(4,7)}-${d.slice(7)}` : '+' + d;
+}
+
+// ── Summary ───────────────────────────────────────────────────────────────────
+function buildSummary() {
+  document.getElementById('sum-pages').textContent  = `${pages.length} page${pages.length>1?'s':''} (B&W, fax-optimized)`;
+  document.getElementById('sum-to').textContent     = fmtFax(getFaxNumber());
+  document.getElementById('sum-cover').textContent  = document.getElementById('cover-text').value.trim() || '(none)';
+  document.getElementById('sum-cost').textContent   = `~$${(pages.length*0.07).toFixed(2)} (${pages.length} × $0.07/page)`;
+  if (document.getElementById('sum-balance').textContent === '—') checkBalance();
+}
+
+// ── Send + poll for delivery ──────────────────────────────────────────────────
+async function sendFax() {
+  const btn = document.getElementById('btn-send');
+  const out = document.getElementById('result-area');
+  btn.disabled = true;
+  btn.textContent = `📡 Sending ${pages.length} page${pages.length>1?'s':''}…`;
+  out.innerHTML = '';
+
+  let digits = getFaxNumber().replace(/\D/g,'');
+  if (digits.length === 10) digits = '1' + digits;
+
+  try {
+    const fd = new FormData();
+    fd.append('to[0]', '+' + digits);
+    pages.forEach((pg, i) => fd.append(`file[${i}]`, pg.blob, `page_${i+1}.jpg`));
+    const cover = document.getElementById('cover-text').value.trim();
+    if (cover) fd.append('cover_page_text', cover);
+
+    const resp = await fetch('https://api.phaxio.com/v2.1/faxes', {
+      method: 'POST', headers: { 'Authorization': AUTH }, body: fd
+    });
+    const data = await resp.json();
+    if (!data.success) throw new Error(data.message || 'API error');
+
+    const faxId = data.data?.id;
+    document.getElementById('send-btns').style.display = 'none';
+    showDeliveryTracker(faxId, digits);
+    startPolling(faxId);
+
+  } catch (err) {
+    let msg = String(err.message);
+    let hint = '';
+    if (msg.toLowerCase().includes('cors') || msg.toLowerCase().includes('failed to fetch') || msg.toLowerCase().includes('networkerror')) {
+      hint = `<br><br><strong>CORS issue:</strong> Phaxio blocks direct browser calls. A free Cloudflare Worker proxy is needed. Check the README or contact support.`;
+    }
+    out.innerHTML = `<div class="result-card error"><h3>❌ Send Failed</h3><p>${msg.replace(/</g,'&lt;')}${hint}</p></div>`;
+    btn.disabled = false;
+    btn.textContent = '📠 Retry';
+  }
+}
+
+function showDeliveryTracker(faxId, digits) {
+  const out = document.getElementById('result-area');
+  out.innerHTML = `
+    <div class="result-card pending" id="tracker-card">
+      <h3>📡 Fax Queued</h3>
+      <p>Fax ID: <span class="fax-id">${faxId}</span></p>
+      <p>Sending to +${digits} — checking delivery every 15 seconds…</p>
+      <div class="delivery-track">
+        <div class="delivery-step done"  id="ds-queued"><div class="dot"></div><span class="dlabel">✓ Queued by Sinch</span></div>
+        <div class="delivery-step active" id="ds-sending"><div class="dot"></div><span class="dlabel">Dialing recipient…</span></div>
+        <div class="delivery-step"        id="ds-done"   ><div class="dot"></div><span class="dlabel">Delivered</span></div>
+      </div>
+    </div>`;
+}
+
+function startPolling(faxId) {
+  let attempts = 0;
+  const max = 20; // 20 × 15s = 5 min
+
+  pollTimer = setInterval(async () => {
+    attempts++;
+    if (attempts > max) {
+      clearInterval(pollTimer);
+      updateTracker('timeout');
+      return;
+    }
+    try {
+      const r = await fetch(`https://api.phaxio.com/v2.1/faxes/${faxId}`, {
+        headers: { 'Authorization': AUTH }
+      });
+      const d = await r.json();
+      if (!d.success) return;
+      const status = d.data?.status;
+      if (status === 'success') { clearInterval(pollTimer); updateTracker('success', d.data); }
+      else if (status === 'failed') { clearInterval(pollTimer); updateTracker('failed', d.data); }
+      // 'queued' or 'sending' → keep polling
+    } catch { /* CORS may block polling too — silently retry */ }
+  }, 15000);
+}
+
+function updateTracker(result, data) {
+  const card = document.getElementById('tracker-card');
+  if (!card) return;
+  const ds = document.getElementById('ds-sending');
+  const dd = document.getElementById('ds-done');
+
+  if (result === 'success') {
+    card.className = 'result-card success';
+    card.querySelector('h3').textContent = '✅ Fax Delivered!';
+    card.querySelector('p').textContent  = `Confirmed delivered to recipient.`;
+    ds.className = 'delivery-step done';
+    ds.querySelector('.dlabel').textContent = '✓ Connected to recipient';
+    dd.className = 'delivery-step done';
+    dd.querySelector('.dlabel').textContent = '✓ Delivered successfully';
+  } else if (result === 'failed') {
+    card.className = 'result-card error';
+    card.querySelector('h3').textContent = '❌ Fax Failed';
+    const reason = data?.recipients?.[0]?.error_type || 'Unknown error';
+    card.querySelector('p').textContent  = `Delivery failed: ${reason}. Try resending.`;
+    ds.className = 'delivery-step failed';
+    dd.className = 'delivery-step failed';
+    dd.querySelector('.dlabel').textContent = 'Failed — check number and retry';
+    document.getElementById('send-btns').style.display = 'flex';
+    document.getElementById('btn-send').disabled = false;
+    document.getElementById('btn-send').textContent = '📠 Retry';
+  } else if (result === 'timeout') {
+    card.querySelector('p').textContent = 'Still sending — check your Sinch dashboard for final status.';
+    ds.querySelector('.dot').style.animation = 'none';
+  }
+}
+
+// ── Nav ───────────────────────────────────────────────────────────────────────
 function goStep(n) {
-  if (n >= 2 && pages.length === 0) return alert('Add at least one page first.');
+  if (n >= 2 && pages.filter(p => !p.processing).length === 0) return alert('Add at least one page first.');
   if (n === 4) {
-    const to = getFaxNumber();
-    if (!to || to.replace(/\D/g,'').length < 10) return alert('Select a valid fax number.');
+    const to = getFaxNumber().replace(/\D/g,'');
+    if (to.length < 10) return alert('Select a valid fax number.');
     buildSummary();
   }
   if (n === 2) buildThumbStrip();
@@ -323,230 +691,10 @@ function goStep(n) {
     p.classList.toggle('done', s < n);
     p.querySelector('.num').textContent = s < n ? '✓' : s;
   });
-  window.scrollTo({top: 0, behavior: 'smooth'});
+  window.scrollTo({top:0, behavior:'smooth'});
 }
 
-// ── Add pages ─────────────────────────────────────────────────────────────────
-function addFiles(files) {
-  Array.from(files).forEach(file => {
-    if (file.size > 20 * 1024 * 1024) { alert(`${file.name} is too large (max 20 MB).`); return; }
-    const url = URL.createObjectURL(file);
-    pages.push({ file, url, ocr: null });
-  });
-  renderGrid();
-}
-
-document.getElementById('camera-input').addEventListener('change', e => {
-  addFiles(e.target.files);
-  e.target.value = ''; // reset so same photo can be retaken
-});
-document.getElementById('file-input').addEventListener('change', e => {
-  addFiles(e.target.files);
-  e.target.value = '';
-});
-
-// ── Grid render ───────────────────────────────────────────────────────────────
-function renderGrid() {
-  const grid  = document.getElementById('page-grid');
-  const none  = document.getElementById('no-pages');
-  const count = document.getElementById('page-count');
-
-  grid.innerHTML = '';
-  none.style.display = pages.length === 0 ? 'block' : 'none';
-  count.style.display = pages.length === 0 ? 'none' : 'flex';
-  document.getElementById('pg-num').textContent   = pages.length;
-  document.getElementById('pg-badge').textContent = pages.length + (pages.length === 1 ? ' page' : ' pages');
-  document.getElementById('btn-next1').disabled   = pages.length === 0;
-
-  pages.forEach((pg, i) => {
-    const thumb = document.createElement('div');
-    thumb.className = 'page-thumb';
-
-    const img = document.createElement('img');
-    img.src = pg.url;
-    img.alt = `Page ${i + 1}`;
-
-    const num = document.createElement('span');
-    num.className = 'pg-num';
-    num.textContent = `P${i + 1}`;
-
-    const del = document.createElement('button');
-    del.className = 'pg-del';
-    del.innerHTML = '×';
-    del.onclick = (e) => { e.stopPropagation(); deletePage(i); };
-
-    thumb.appendChild(img);
-    thumb.appendChild(num);
-    thumb.appendChild(del);
-    grid.appendChild(thumb);
-  });
-
-  // "Add more" tile
-  if (pages.length > 0) {
-    const addTile = document.createElement('label');
-    addTile.className = 'add-tile';
-    addTile.innerHTML = `
-      <span class="big">＋</span>
-      <span>Add page</span>
-      <input type="file" accept="image/*" capture="environment">
-    `;
-    addTile.querySelector('input').addEventListener('change', e => {
-      addFiles(e.target.files); e.target.value = '';
-    });
-    grid.appendChild(addTile);
-  }
-}
-
-function deletePage(i) {
-  URL.revokeObjectURL(pages[i].url);
-  pages.splice(i, 1);
-  delete ocrCache[i];
-  // Rebuild cache keys
-  const newCache = {};
-  Object.entries(ocrCache).forEach(([k, v]) => {
-    if (+k < i) newCache[k] = v;
-    else if (+k > i) newCache[+k - 1] = v;
-  });
-  ocrCache = newCache;
-  renderGrid();
-}
-
-// ── Thumb strip (step 2) ──────────────────────────────────────────────────────
-function buildThumbStrip() {
-  const strip = document.getElementById('thumb-strip');
-  strip.innerHTML = '';
-  pages.forEach((pg, i) => {
-    const img = document.createElement('img');
-    img.src = pg.url;
-    img.alt = `Page ${i + 1}`;
-    img.onclick = () => selectPage(i);
-    strip.appendChild(img);
-  });
-  selectPage(0);
-}
-
-function selectPage(i) {
-  document.querySelectorAll('.thumb-strip img').forEach((img, idx) => {
-    img.classList.toggle('active', idx === i);
-  });
-  document.getElementById('ocr-page-label').textContent = i + 1;
-
-  if (ocrCache[i] !== undefined) {
-    document.getElementById('ocr-text').value = ocrCache[i];
-    return;
-  }
-
-  // Run OCR for this page
-  const status = document.getElementById('ocr-status');
-  const msg    = document.getElementById('ocr-msg');
-  const ta     = document.getElementById('ocr-text');
-  ta.value = '';
-  status.classList.add('show');
-  msg.textContent = 'Reading page…';
-  status.querySelector('.spinner').style.display = 'block';
-
-  if (pages[i].file.type === 'application/pdf') {
-    ocrCache[i] = '(PDF — text not extracted)';
-    ta.value = ocrCache[i];
-    status.classList.remove('show');
-    return;
-  }
-
-  Tesseract.createWorker('eng', 1, {
-    logger: m => { if (m.status === 'recognizing text') msg.textContent = `OCR ${Math.round(m.progress*100)}%…`; }
-  }).then(worker => {
-    worker.recognize(pages[i].file).then(({ data: { text } }) => {
-      worker.terminate();
-      ocrCache[i] = text.trim() || '(No text detected)';
-      // Only update if this page is still selected
-      if (document.getElementById('ocr-page-label').textContent == (i + 1)) {
-        ta.value = ocrCache[i];
-      }
-      status.querySelector('.spinner').style.display = 'none';
-      msg.textContent = '✓ Done';
-      setTimeout(() => status.classList.remove('show'), 1500);
-    });
-  }).catch(() => {
-    ocrCache[i] = '(OCR failed)';
-    ta.value = ocrCache[i];
-    status.classList.remove('show');
-  });
-}
-
-// ── Fax number ────────────────────────────────────────────────────────────────
-function getFaxNumber() {
-  const v = document.getElementById('fax-select').value;
-  if (v === 'custom') return document.getElementById('custom-number').value;
-  return v;
-}
-function syncCustom() {
-  document.getElementById('custom-wrap').style.display =
-    document.getElementById('fax-select').value === 'custom' ? 'block' : 'none';
-}
-function fmtFax(n) {
-  const d = n.replace(/\D/g,'');
-  return d.length === 11 ? `+${d[0]} (${d.slice(1,4)}) ${d.slice(4,7)}-${d.slice(7)}` : '+' + d;
-}
-
-// ── Summary ───────────────────────────────────────────────────────────────────
-function buildSummary() {
-  const to = getFaxNumber().replace(/\D/g,'');
-  document.getElementById('sum-pages').textContent  = `${pages.length} page${pages.length > 1 ? 's' : ''}`;
-  document.getElementById('sum-to').textContent     = fmtFax(getFaxNumber());
-  document.getElementById('sum-cover').textContent  = document.getElementById('cover-text').value.trim() || '(none)';
-  document.getElementById('sum-cost').textContent   = `~$${(pages.length * 0.07).toFixed(2)} est. (${pages.length} × $0.07)`;
-}
-
-// ── Send ──────────────────────────────────────────────────────────────────────
-async function sendFax() {
-  const btn = document.getElementById('btn-send');
-  const out = document.getElementById('result-area');
-  btn.disabled = true;
-  btn.textContent = `📡 Sending ${pages.length} page${pages.length > 1 ? 's' : ''}…`;
-  out.innerHTML = '';
-
-  let digits = getFaxNumber().replace(/\D/g,'');
-  if (digits.length === 10) digits = '1' + digits;
-
-  try {
-    const fd = new FormData();
-    fd.append('to[0]', '+' + digits);
-
-    // Append all pages as separate files
-    pages.forEach((pg, i) => {
-      fd.append(`file[${i}]`, pg.file, pg.file.name || `page_${i+1}.jpg`);
-    });
-
-    const cover = document.getElementById('cover-text').value.trim();
-    if (cover) fd.append('cover_page_text', cover);
-
-    const auth = btoa(API_KEY + ':' + API_SECRET);
-    const resp = await fetch('https://api.phaxio.com/v2.1/faxes', {
-      method: 'POST',
-      headers: { 'Authorization': 'Basic ' + auth },
-      body: fd,
-    });
-
-    const data = await resp.json();
-    if (!data.success) throw new Error(data.message || 'API error');
-
-    out.innerHTML = `<div class="result-card success">
-      <h3>✅ Fax sent!</h3>
-      <p>${pages.length} page${pages.length > 1 ? 's' : ''} queued — delivery takes 1–5 minutes.</p>
-      <span class="fax-id">ID: ${data.data?.id}</span>
-    </div>`;
-    document.getElementById('send-btns').style.display = 'none';
-
-  } catch (err) {
-    out.innerHTML = `<div class="result-card error">
-      <h3>❌ Failed</h3>
-      <p>${String(err.message).replace(/</g,'&lt;')}</p>
-    </div>`;
-    btn.disabled = false;
-    btn.textContent = '📠 Retry';
-  }
-}
-
+let currentStep = 1;
 document.getElementById('btn-next1').addEventListener('click', () => goStep(2));
 </script>
 </body>
