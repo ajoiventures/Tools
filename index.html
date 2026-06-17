@@ -174,8 +174,6 @@ footer{padding:12px 16px;text-align:center;font-size:11px;color:var(--muted);bor
 /* Video */
 .cam-view{position:relative;flex:1;overflow:hidden;}
 #cam-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
-/* Frozen photo canvas (exact match to video display) */
-#cam-photo{position:absolute;inset:0;width:100%;height:100%;display:none;}
 #cam-overlay{position:absolute;inset:0;width:100%;height:100%;touch-action:none;display:none;}
 /* Capture button */
 .cam-toolbar{display:flex;align-items:center;justify-content:center;padding:20px 16px;background:#000;flex-shrink:0;}
@@ -204,7 +202,7 @@ footer{padding:12px 16px;text-align:center;font-size:11px;color:var(--muted);bor
   </div>
   <div class="cam-view">
     <video id="cam-video" autoplay playsinline muted></video>
-    <canvas id="cam-photo"></canvas>
+    <img id="cam-photo" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;">
     <canvas id="cam-overlay"></canvas>
   </div>
   <div class="cam-toolbar" id="cam-toolbar">
@@ -1073,12 +1071,12 @@ window.addEventListener('load', () => {
 
 // ── Camera Scanner ────────────────────────────────────────────────────────────
 let camStream=null, camSnap=null, camCorners=null, camDrag=-1, camRAF=null, camMode='color';
+let camPhotoUrl=null; // blob URL for cleanup
 
 const camScanner = document.getElementById('cam-scanner');
 const camVideo   = document.getElementById('cam-video');
-const camPhoto   = document.getElementById('cam-photo');   // frozen photo canvas
-const camOverlay = document.getElementById('cam-overlay'); // corner lines canvas
-const camPhCtx   = camPhoto.getContext('2d');
+const camPhoto   = document.getElementById('cam-photo');   // <img> for sharp display
+const camOverlay = document.getElementById('cam-overlay'); // corner-handle canvas
 const camOvCtx   = camOverlay.getContext('2d');
 const camToolbar = document.getElementById('cam-toolbar');
 const camAdjWrap = document.getElementById('cam-adj-wrap');
@@ -1104,24 +1102,35 @@ function closeCamera() {
   document.body.style.overflow='';
   camSnap=null; camCorners=null; camDrag=-1;
   camVideo.style.display='block';
-  camPhoto.style.display='none'; camOverlay.style.display='none';
+  camPhoto.style.display='none'; camPhoto.src='';
+  camOverlay.style.display='none';
   camToolbar.style.display='flex'; camAdjWrap.style.display='none';
+  if(camPhotoUrl){ URL.revokeObjectURL(camPhotoUrl); camPhotoUrl=null; }
   document.getElementById('cam-status').textContent='Tap button to capture';
 }
 
-// ── Capture: draw video frame to photo canvas at display size ─────────────────
+// ── Capture: grab full-res frame, display via <img> (no quality loss) ─────────
 function camCapture() {
   if(!camVideo.videoWidth) return;
-  // Size both canvases to exactly what the user sees
+  // Full-resolution snapshot
+  const full = document.createElement('canvas');
+  full.width = camVideo.videoWidth; full.height = camVideo.videoHeight;
+  full.getContext('2d').drawImage(camVideo, 0, 0);
+  camSnap = full; // kept for warp
+  camVideo.pause(); camVideo.style.display='none';
+
+  // Display via <img> — browser scales natively, zero degradation
+  if(camPhotoUrl) URL.revokeObjectURL(camPhotoUrl);
+  full.toBlob(blob => {
+    camPhotoUrl = URL.createObjectURL(blob);
+    camPhoto.src = camPhotoUrl;
+    camPhoto.style.display = 'block';
+  }, 'image/jpeg', 0.97);
+
+  // Overlay canvas sized to display (CSS pixels only — no pixel data here)
   const W = camVideo.clientWidth, H = camVideo.clientHeight;
-  camPhoto.width  = W; camPhoto.height  = H;
-  camOverlay.width= W; camOverlay.height= H;
-  // Draw the video as displayed (object-fit:cover handles cropping)
-  camPhCtx.drawImage(camVideo, 0, 0, W, H);
-  camSnap = { canvas: camPhoto, w: W, h: H };
-  camVideo.pause();
-  camVideo.style.display='none';
-  camPhoto.style.display='block'; camOverlay.style.display='block';
+  camOverlay.width = W; camOverlay.height = H;
+  camOverlay.style.display = 'block';
   const pad = Math.round(Math.min(W,H) * .05);
   camCorners = [[pad,pad],[W-pad,pad],[W-pad,H-pad],[pad,H-pad]];
   camMode='color'; setMode('color');
@@ -1135,7 +1144,9 @@ function camRetake() {
   if(camRAF){ cancelAnimationFrame(camRAF); camRAF=null; }
   camSnap=null; camCorners=null;
   camVideo.style.display='block';
-  camPhoto.style.display='none'; camOverlay.style.display='none';
+  camPhoto.style.display='none'; camPhoto.src='';
+  camOverlay.style.display='none';
+  if(camPhotoUrl){ URL.revokeObjectURL(camPhotoUrl); camPhotoUrl=null; }
   camToolbar.style.display='flex'; camAdjWrap.style.display='none';
   document.getElementById('cam-status').textContent='Tap button to capture';
   camVideo.play();
@@ -1167,14 +1178,21 @@ function drawOverlay() {
 // ── Add page ──────────────────────────────────────────────────────────────────
 async function camUse() {
   if(!camSnap||!camCorners) return;
-  const { canvas, w, h } = camSnap;
-  // corners are already in photo canvas pixel space (same W×H), no remapping needed
+  const vw=camSnap.width, vh=camSnap.height;
+  const dw=camOverlay.width, dh=camOverlay.height;
+  // Map display corners → full-res coords (reverse the object-fit:cover transform)
+  const videoAR=vw/vh, dispAR=dw/dh;
+  let scale, ox=0, oy=0;
+  if(videoAR>dispAR){ scale=dh/vh; ox=(vw*scale-dw)/2; }
+  else              { scale=dw/vw; oy=(vh*scale-dh)/2; }
+  const fullCorners=camCorners.map(([x,y])=>[(x+ox)/scale,(y+oy)/scale]);
+  const snapRef=camSnap;
   closeCamera();
   const banner=document.getElementById('proc-banner'), msg=document.getElementById('proc-msg');
   banner.classList.add('show'); msg.textContent='Processing…';
-  const warped=perspectiveWarp(canvas, camCorners);
-  const scale=Math.min(FAX_W/warped.width,FAX_H/warped.height);
-  const ow=Math.round(warped.width*scale), oh=Math.round(warped.height*scale);
+  const warped=perspectiveWarp(snapRef, fullCorners);
+  const faxScale=Math.min(FAX_W/warped.width,FAX_H/warped.height);
+  const ow=Math.round(warped.width*faxScale), oh=Math.round(warped.height*faxScale);
   const out=document.getElementById('proc-canvas');
   out.width=ow; out.height=oh;
   const ctx=out.getContext('2d');
