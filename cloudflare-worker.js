@@ -60,8 +60,11 @@ async function handleRequest(request) {
   });
 
   const resHeaders = {};
+  const corsHeadersToSkip = new Set(['access-control-allow-origin', 'access-control-allow-methods', 'access-control-allow-headers', 'access-control-allow-credentials']);
   for (const [key, val] of upstream.headers.entries()) {
-    resHeaders[key] = val;
+    if (!corsHeadersToSkip.has(key.toLowerCase())) {
+      resHeaders[key] = val;
+    }
   }
   Object.assign(resHeaders, CORS);
 
