@@ -164,9 +164,42 @@ textarea{min-height:90px;}
 .delivery-step.failed .dlabel{color:var(--danger);}
 
 footer{padding:12px 16px;text-align:center;font-size:11px;color:var(--muted);border-top:1px solid var(--border);}
+
+/* ── Live Camera Scanner ── */
+.cam-scanner{position:fixed;inset:0;background:#000;z-index:300;display:none;flex-direction:column;}
+.cam-scanner.open{display:flex;}
+.cam-video-wrap{position:relative;flex:1;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+#cam-video{width:100%;height:100%;object-fit:cover;}
+#cam-overlay{position:absolute;inset:0;width:100%;height:100%;touch-action:none;}
+.cam-toolbar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:rgba(0,0,0,.7);gap:16px;flex-shrink:0;}
+.cam-close{background:none;border:none;color:#fff;font-size:24px;cursor:pointer;padding:4px 8px;line-height:1;}
+.cam-hint{font-size:12px;color:rgba(255,255,255,.6);text-align:center;flex:1;}
+.cam-capture{width:64px;height:64px;border-radius:50%;background:#fff;border:4px solid rgba(255,255,255,.4);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;transition:transform .1s;}
+.cam-capture:active{transform:scale(.9);}
+.cam-top-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:rgba(0,0,0,.6);flex-shrink:0;}
+.cam-top-bar span{color:rgba(255,255,255,.7);font-size:12px;}
+.cam-retake{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:99px;padding:6px 14px;font-size:13px;cursor:pointer;}
 </style>
 </head>
 <body>
+
+<!-- ══════════════════ LIVE CAMERA SCANNER ══════════════════ -->
+<div class="cam-scanner" id="cam-scanner">
+  <div class="cam-top-bar">
+    <button class="cam-close" onclick="closeCamera()">✕</button>
+    <span id="cam-status">Detecting document…</span>
+    <button class="cam-retake" onclick="resetCorners()">Reset</button>
+  </div>
+  <div class="cam-video-wrap">
+    <video id="cam-video" autoplay playsinline muted></video>
+    <canvas id="cam-overlay"></canvas>
+  </div>
+  <div class="cam-toolbar">
+    <div style="width:48px"></div>
+    <button class="cam-capture" onclick="captureFrame()" title="Capture">📷</button>
+    <div class="cam-hint">Drag corners to adjust</div>
+  </div>
+</div>
 
 <!-- ══════════════════ SETTINGS DRAWER ══════════════════ -->
 <div class="drawer-overlay" id="overlay" onclick="closeSettings()"></div>
@@ -346,16 +379,16 @@ footer{padding:12px 16px;text-align:center;font-size:11px;color:var(--muted);bor
     <h2>Scan Your Pages</h2>
     <p class="sub">Take photos one by one. Each image is auto-resized and converted to fax-ready B&amp;W.</p>
     <div class="cam-row">
-      <label class="btn-camera">
+      <button class="btn-camera" onclick="openCamera()">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-        📸 Camera
-        <input type="file" id="camera-input" accept="image/*" capture="environment">
-      </label>
+        📸 Scan
+      </button>
       <label class="btn-camera">
         📁 Upload
         <input type="file" id="file-input" accept="image/*,application/pdf" multiple>
       </label>
     </div>
+    <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none">
     <div class="proc-banner" id="proc-banner">
       <div class="spinner"></div>
       <span id="proc-msg">Processing…</span>
@@ -982,6 +1015,161 @@ window.addEventListener('load', () => {
     document.getElementById('cover-text').value = CFG.coverDef;
   }
 });
+
+// ── Live Camera Scanner ───────────────────────────────────────────────────────
+let camStream = null, camCorners = null, camDragging = null, camRAF = null, userAdjusted = false;
+const camScanner = document.getElementById('cam-scanner');
+const camVideo   = document.getElementById('cam-video');
+const camCanvas  = document.getElementById('cam-overlay');
+const camCtx     = camCanvas.getContext('2d');
+
+async function openCamera() {
+  try {
+    camStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }
+    });
+    camVideo.srcObject = camStream;
+    camVideo.play();
+    camScanner.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    camVideo.addEventListener('loadedmetadata', startOverlay, { once: true });
+  } catch(e) {
+    // Fallback to file input if camera not available
+    document.getElementById('camera-input').click();
+  }
+}
+
+function closeCamera() {
+  if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+  if (camRAF) { cancelAnimationFrame(camRAF); camRAF = null; }
+  camScanner.classList.remove('open');
+  document.body.style.overflow = '';
+  camCorners = null; userAdjusted = false;
+}
+
+function startOverlay() {
+  resizeOverlay();
+  window.addEventListener('resize', resizeOverlay);
+  scheduleDetect();
+}
+
+function resizeOverlay() {
+  camCanvas.width  = camVideo.clientWidth;
+  camCanvas.height = camVideo.clientHeight;
+}
+
+let detectTimer = null;
+function scheduleDetect() {
+  if (!userAdjusted) runDetect();
+  detectTimer = setTimeout(scheduleDetect, 600);
+}
+
+function runDetect() {
+  if (!camVideo.videoWidth) return;
+  const snap = document.createElement('canvas');
+  snap.width = camVideo.videoWidth; snap.height = camVideo.videoHeight;
+  snap.getContext('2d').drawImage(camVideo, 0, 0);
+  const raw = detectDocumentCorners(snap);
+  const vw = camVideo.videoWidth, vh = camVideo.videoHeight;
+  const dw = camCanvas.width, dh = camCanvas.height;
+  camCorners = raw.map(([x,y]) => [x / vw * dw, y / vh * dh]);
+  drawOverlay();
+  document.getElementById('cam-status').textContent = 'Document detected — adjust corners or capture';
+}
+
+function drawOverlay() {
+  if (!camCorners) return;
+  camCtx.clearRect(0, 0, camCanvas.width, camCanvas.height);
+  const [tl,tr,br,bl] = camCorners;
+  // Fill
+  camCtx.beginPath();
+  camCtx.moveTo(...tl); camCtx.lineTo(...tr); camCtx.lineTo(...br); camCtx.lineTo(...bl);
+  camCtx.closePath();
+  camCtx.fillStyle = 'rgba(108,99,255,0.15)';
+  camCtx.fill();
+  // Border
+  camCtx.strokeStyle = '#6c63ff';
+  camCtx.lineWidth = 2.5;
+  camCtx.stroke();
+  // Corner handles
+  camCorners.forEach(([x,y]) => {
+    camCtx.beginPath();
+    camCtx.arc(x, y, 14, 0, Math.PI*2);
+    camCtx.fillStyle = '#6c63ff';
+    camCtx.fill();
+    camCtx.beginPath();
+    camCtx.arc(x, y, 7, 0, Math.PI*2);
+    camCtx.fillStyle = '#fff';
+    camCtx.fill();
+  });
+  camRAF = requestAnimationFrame(drawOverlay);
+}
+
+function resetCorners() { userAdjusted = false; runDetect(); }
+
+// Touch / mouse drag for corner handles
+function getEventPos(e) {
+  const rect = camCanvas.getBoundingClientRect();
+  const src = e.touches ? e.touches[0] : e;
+  return [src.clientX - rect.left, src.clientY - rect.top];
+}
+function findNearestCorner([px,py]) {
+  if (!camCorners) return -1;
+  let best = -1, bestD = 40;
+  camCorners.forEach(([cx,cy],i) => { const d=Math.hypot(px-cx,py-cy); if(d<bestD){bestD=d;best=i;} });
+  return best;
+}
+camCanvas.addEventListener('touchstart', e => { e.preventDefault(); const p=getEventPos(e); camDragging=findNearestCorner(p); if(camDragging>=0) userAdjusted=true; }, { passive:false });
+camCanvas.addEventListener('touchmove',  e => { e.preventDefault(); if(camDragging<0) return; camCorners[camDragging]=getEventPos(e); }, { passive:false });
+camCanvas.addEventListener('touchend',   () => camDragging=-1);
+camCanvas.addEventListener('mousedown',  e => { const p=getEventPos(e); camDragging=findNearestCorner(p); if(camDragging>=0) userAdjusted=true; });
+camCanvas.addEventListener('mousemove',  e => { if(camDragging<0) return; camCorners[camDragging]=getEventPos(e); });
+camCanvas.addEventListener('mouseup',    () => camDragging=-1);
+
+async function captureFrame() {
+  if (!camVideo.videoWidth) return;
+  const vw = camVideo.videoWidth, vh = camVideo.videoHeight;
+  const dw = camCanvas.width, dh = camCanvas.height;
+  // Convert overlay corners back to video coordinates
+  const videoCorners = camCorners
+    ? camCorners.map(([x,y]) => [x / dw * vw, y / dh * vh])
+    : null;
+  // Grab raw frame
+  const snap = document.createElement('canvas');
+  snap.width = vw; snap.height = vh;
+  snap.getContext('2d').drawImage(camVideo, 0, 0);
+  closeCamera();
+  // Warp using current corners
+  const banner = document.getElementById('proc-banner');
+  const msg    = document.getElementById('proc-msg');
+  banner.classList.add('show');
+  msg.textContent = 'Flattening document…';
+  const corners = videoCorners || detectDocumentCorners(snap);
+  const warped  = perspectiveWarp(snap, corners);
+  const scale   = Math.min(FAX_W / warped.width, FAX_H / warped.height);
+  const ow = Math.round(warped.width * scale), oh = Math.round(warped.height * scale);
+  const out = document.getElementById('proc-canvas');
+  out.width = ow; out.height = oh;
+  const ctx = out.getContext('2d');
+  ctx.drawImage(warped, 0, 0, ow, oh);
+  if (CFG.bw) {
+    const idata=ctx.getImageData(0,0,ow,oh), d=idata.data;
+    for(let i=0;i<d.length;i+=4){
+      let g=.299*d[i]+.587*d[i+1]+.114*d[i+2];
+      if(CFG.contrast) g=Math.min(255,Math.max(0,(g-128)*1.4+128));
+      d[i]=d[i+1]=d[i+2]=g;
+    }
+    ctx.putImageData(idata,0,0);
+  }
+  out.toBlob(async blob => {
+    const idx = pages.length;
+    pages.push({ blob, url: URL.createObjectURL(blob), processing: false });
+    dbSavePage(idx, blob);
+    if (CFG.autosave) downloadPage(blob, idx+1);
+    renderGrid();
+    banner.classList.remove('show');
+  }, 'image/jpeg', parseFloat(CFG.quality));
+}
 </script>
 </body>
 </html>
