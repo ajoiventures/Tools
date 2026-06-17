@@ -1069,6 +1069,7 @@ window.addEventListener('load', () => {
 
 // ── Camera Scanner ────────────────────────────────────────────────────────────
 let camStream=null, camSnap=null, camCorners=null, camDrag=-1, camRAF=null, camMode='color';
+let camCW=0, camCH=0; // CSS pixel dimensions (used for corners & drawing coords)
 
 const camScanner = document.getElementById('cam-scanner');
 const camVideo   = document.getElementById('cam-video');
@@ -1076,6 +1077,15 @@ const camCanvas  = document.getElementById('cam-overlay');
 const camCtx     = camCanvas.getContext('2d');
 const camToolbar = document.getElementById('cam-toolbar');
 const camAdjWrap = document.getElementById('cam-adj-wrap');
+
+function setupCamCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  camCW = camVideo.clientWidth  || camVideo.offsetWidth;
+  camCH = camVideo.clientHeight || camVideo.offsetHeight;
+  camCanvas.width  = camCW * dpr;
+  camCanvas.height = camCH * dpr;
+  camCtx.setTransform(dpr, 0, 0, dpr, 0, 0); // draw in CSS pixels
+}
 
 async function openCamera() {
   try {
@@ -1086,13 +1096,12 @@ async function openCamera() {
     await camVideo.play();
     camScanner.classList.add('open');
     document.body.style.overflow = 'hidden';
-    camVideo.addEventListener('loadedmetadata', () => {
-      camCanvas.width=camVideo.clientWidth; camCanvas.height=camVideo.clientHeight;
-    }, { once:true });
+    camVideo.addEventListener('loadedmetadata', setupCamCanvas, { once:true });
   } catch(e) {
     document.getElementById('camera-input').click();
   }
 }
+window.addEventListener('resize', ()=>{ if(camStream) setupCamCanvas(); });
 
 function closeCamera() {
   if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream=null; }
@@ -1110,10 +1119,9 @@ function camCapture() {
   camSnap.width=camVideo.videoWidth; camSnap.height=camVideo.videoHeight;
   camSnap.getContext('2d').drawImage(camVideo,0,0);
   camVideo.pause();
-  // Default corners = full image
-  const w=camCanvas.width, h=camCanvas.height;
-  const pad=Math.round(Math.min(w,h)*.04);
-  camCorners=[[pad,pad],[w-pad,pad],[w-pad,h-pad],[pad,h-pad]];
+  setupCamCanvas(); // re-measure in case layout shifted
+  const pad=Math.round(Math.min(camCW,camCH)*.04);
+  camCorners=[[pad,pad],[camCW-pad,pad],[camCW-pad,camCH-pad],[pad,camCH-pad]];
   camMode='color'; setMode('color',true);
   camToolbar.style.display='none'; camAdjWrap.style.display='flex';
   document.getElementById('cam-status').textContent='Drag corners · pick mode · Add Page';
@@ -1140,8 +1148,7 @@ function setMode(m, silent) {
 // ── Draw adjustment view ──────────────────────────────────────────────────────
 function drawAdjust() {
   if(!camSnap||!camCorners) return;
-  const dw=camCanvas.width, dh=camCanvas.height;
-  camCtx.drawImage(camSnap,0,0,dw,dh);
+  camCtx.drawImage(camSnap,0,0,camCW,camCH);
   // Quad
   const[tl,tr,br,bl]=camCorners;
   camCtx.beginPath(); camCtx.moveTo(...tl);camCtx.lineTo(...tr);camCtx.lineTo(...br);camCtx.lineTo(...bl); camCtx.closePath();
@@ -1159,8 +1166,8 @@ function drawAdjust() {
 // ── Add page ──────────────────────────────────────────────────────────────────
 async function camUse() {
   if(!camSnap||!camCorners) return;
-  const vw=camSnap.width, vh=camSnap.height, dw=camCanvas.width, dh=camCanvas.height;
-  const vidCorners=camCorners.map(([x,y])=>[x/dw*vw, y/dh*vh]);
+  const vw=camSnap.width, vh=camSnap.height;
+  const vidCorners=camCorners.map(([x,y])=>[x/camCW*vw, y/camCH*vh]);
   closeCamera();
   const banner=document.getElementById('proc-banner'), msg=document.getElementById('proc-msg');
   banner.classList.add('show'); msg.textContent='Processing…';
