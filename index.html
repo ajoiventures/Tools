@@ -17,222 +17,69 @@
     --muted: #8888a8;
     --radius: 14px;
   }
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    min-height: 100dvh;
-    display: flex;
-    flex-direction: column;
-  }
-
-  header {
-    padding: 18px 20px 14px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  header svg { flex-shrink: 0; }
-  header h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100dvh; display: flex; flex-direction: column; }
+  header { padding: 18px 20px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  header h1 { font-size: 18px; font-weight: 700; }
   header p  { font-size: 12px; color: var(--muted); margin-top: 1px; }
-
-  /* Step pills */
-  .steps {
-    display: flex;
-    padding: 14px 20px;
-    gap: 6px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    border-bottom: 1px solid var(--border);
-  }
-  .step-pill {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-    border-radius: 99px;
-    font-size: 12px;
-    font-weight: 600;
-    white-space: nowrap;
-    background: var(--surface2);
-    color: var(--muted);
-    transition: all .2s;
-    cursor: default;
-  }
+  .steps { display: flex; padding: 14px 20px; gap: 6px; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--border); }
+  .step-pill { display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 99px; font-size: 12px; font-weight: 600; white-space: nowrap; background: var(--surface2); color: var(--muted); }
   .step-pill.active { background: var(--accent); color: #fff; }
-  .step-pill.done   { background: var(--surface2); color: var(--accent2); }
+  .step-pill.done   { color: var(--accent2); }
   .step-pill .num   { width: 18px; height: 18px; border-radius: 50%; background: rgba(255,255,255,.15); display: flex; align-items: center; justify-content: center; font-size: 10px; }
-  .step-pill.active .num { background: rgba(255,255,255,.25); }
-  .step-pill.done .num   { background: transparent; }
-
   main { flex: 1; padding: 20px; max-width: 540px; width: 100%; margin: 0 auto; }
-
-  /* Panel */
   .panel { display: none; flex-direction: column; gap: 16px; }
   .panel.active { display: flex; }
-
   h2 { font-size: 17px; font-weight: 700; }
   p.sub { font-size: 13px; color: var(--muted); line-height: 1.5; }
-
-  /* Upload zone */
-  .upload-zone {
-    border: 2px dashed var(--border);
-    border-radius: var(--radius);
-    padding: 32px 20px;
-    text-align: center;
-    cursor: pointer;
-    transition: border-color .2s, background .2s;
-    position: relative;
-    background: var(--surface);
-  }
-  .upload-zone:hover, .upload-zone.drag { border-color: var(--accent); background: rgba(108,99,255,.07); }
-  .upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .upload-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 32px 20px; text-align: center; cursor: pointer; background: var(--surface); position: relative; }
+  .upload-zone:hover { border-color: var(--accent); }
+  .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
   .upload-zone .icon { font-size: 36px; margin-bottom: 10px; }
   .upload-zone h3 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
   .upload-zone p  { font-size: 12px; color: var(--muted); }
-
-  .or-divider { text-align: center; color: var(--muted); font-size: 12px; position: relative; }
-  .or-divider::before, .or-divider::after {
-    content: '';
-    position: absolute;
-    top: 50%; width: 42%;
-    height: 1px; background: var(--border);
-  }
-  .or-divider::before { left: 0; }
-  .or-divider::after  { right: 0; }
-
-  /* Camera button */
-  .btn-camera {
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    padding: 16px; border-radius: var(--radius);
-    border: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--text); font-size: 15px; font-weight: 600;
-    cursor: pointer; transition: background .2s;
-    width: 100%;
-  }
-  .btn-camera:hover { background: var(--surface2); }
-  .btn-camera input { display: none; }
-
-  /* Preview */
-  #preview-wrap {
-    display: none;
-    border-radius: var(--radius);
-    overflow: hidden;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    flex-direction: column;
-  }
-  #preview-wrap.show { display: flex; }
-  #preview-img { width: 100%; max-height: 260px; object-fit: contain; background: #000; display: none; }
-  #preview-pdf { width: 100%; height: 200px; border: none; display: none; }
-  .preview-label { padding: 10px 14px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--border); display: flex; justify-content: space-between; }
-
-  /* OCR section */
-  #ocr-status {
-    display: none;
-    align-items: center; gap: 10px;
-    padding: 12px 16px;
-    background: var(--surface);
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-    font-size: 13px;
-  }
-  #ocr-status.show { display: flex; }
-  .spinner {
-    width: 18px; height: 18px; border-radius: 50%;
-    border: 2px solid var(--border);
-    border-top-color: var(--accent);
-    animation: spin .7s linear infinite;
-    flex-shrink: 0;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* Textarea */
-  .field-label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
-  textarea, select, input[type=text] {
-    width: 100%;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text);
-    font-family: inherit;
-    padding: 12px 14px;
-    font-size: 14px;
-    resize: vertical;
-    outline: none;
-    transition: border-color .2s;
-  }
-  textarea:focus, select:focus, input[type=text]:focus { border-color: var(--accent); }
-  select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238888a8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; cursor: pointer; }
-  select option { background: var(--surface2); }
-  textarea { min-height: 130px; }
-
-  /* Buttons */
-  .btn {
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    padding: 16px 24px; border-radius: var(--radius);
-    font-size: 15px; font-weight: 700; cursor: pointer;
-    border: none; transition: opacity .2s, transform .1s; width: 100%;
-  }
-  .btn:active { transform: scale(.98); }
-  .btn:disabled { opacity: .45; cursor: not-allowed; }
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover:not(:disabled) { opacity: .9; }
-  .btn-success { background: var(--accent2); color: #0f0f13; }
-  .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-  .btn-ghost:hover { background: var(--border); }
-
-  .btn-row { display: flex; gap: 10px; }
-  .btn-row .btn { flex: 1; }
-
-  /* Result card */
-  .result-card {
-    border-radius: var(--radius);
-    padding: 20px;
-    display: flex; flex-direction: column; gap: 8px;
-    border: 1px solid;
-  }
-  .result-card.success { background: rgba(74,222,128,.08); border-color: rgba(74,222,128,.3); }
-  .result-card.error   { background: rgba(248,113,113,.08); border-color: rgba(248,113,113,.3); }
-  .result-card h3 { font-size: 16px; font-weight: 700; }
-  .result-card.success h3 { color: var(--accent2); }
-  .result-card.error   h3 { color: var(--danger); }
-  .result-card p { font-size: 13px; color: var(--muted); }
-  .result-card .fax-id { font-family: monospace; font-size: 13px; background: var(--surface2); padding: 6px 10px; border-radius: 8px; display: inline-block; margin-top: 2px; }
-
-  /* Info box */
-  .info-box {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px 16px;
-    font-size: 13px;
-    color: var(--muted);
-    line-height: 1.6;
-  }
-  .info-box strong { color: var(--text); }
-
-  /* Summary row */
-  .summary-row { display: flex; justify-content: space-between; align-items: flex-start; font-size: 13px; padding: 8px 0; border-bottom: 1px solid var(--border); gap: 12px; }
-  .summary-row:last-child { border-bottom: none; }
-  .summary-row .lbl { color: var(--muted); flex-shrink: 0; }
-  .summary-row .val { color: var(--text); font-weight: 500; text-align: right; word-break: break-all; }
-
-  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 99px; font-size: 11px; font-weight: 600; background: rgba(108,99,255,.2); color: var(--accent); }
-
-  footer { padding: 16px 20px; text-align: center; font-size: 11px; color: var(--muted); border-top: 1px solid var(--border); }
-
-  @media (prefers-color-scheme: light) {
-    :root {
-      --bg: #f4f4f8; --surface: #fff; --surface2: #f0f0f5;
-      --border: #dddde8; --text: #1a1a2e; --muted: #6666a0;
-    }
-  }
+  .or-div { text-align: center; color: var(--muted); font-size: 12px; position: relative; }
+  .or-div::before,.or-div::after { content:''; position:absolute; top:50%; width:44%; height:1px; background:var(--border); }
+  .or-div::before { left:0; } .or-div::after { right:0; }
+  .btn-camera { display:flex; align-items:center; justify-content:center; gap:10px; padding:16px; border-radius:var(--radius); border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:15px; font-weight:600; cursor:pointer; width:100%; position:relative; }
+  .btn-camera input { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+  #preview-wrap { display:none; border-radius:var(--radius); overflow:hidden; border:1px solid var(--border); background:var(--surface); flex-direction:column; }
+  #preview-wrap.show { display:flex; }
+  #preview-img { width:100%; max-height:260px; object-fit:contain; background:#000; display:none; }
+  #preview-pdf { width:100%; height:200px; border:none; display:none; }
+  .preview-label { padding:10px 14px; font-size:12px; color:var(--muted); border-top:1px solid var(--border); display:flex; justify-content:space-between; }
+  #ocr-status { display:none; align-items:center; gap:10px; padding:12px 16px; background:var(--surface); border-radius:var(--radius); border:1px solid var(--border); font-size:13px; }
+  #ocr-status.show { display:flex; }
+  .spinner { width:18px; height:18px; border-radius:50%; border:2px solid var(--border); border-top-color:var(--accent); animation:spin .7s linear infinite; flex-shrink:0; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .field-label { font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; }
+  textarea, select, input[type=text] { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); color:var(--text); font-family:inherit; padding:12px 14px; font-size:14px; resize:vertical; outline:none; transition:border-color .2s; }
+  textarea:focus, select:focus, input[type=text]:focus { border-color:var(--accent); }
+  select { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238888a8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; padding-right:36px; cursor:pointer; }
+  select option { background:var(--surface2); }
+  textarea { min-height:120px; }
+  .btn { display:flex; align-items:center; justify-content:center; gap:8px; padding:16px 24px; border-radius:var(--radius); font-size:15px; font-weight:700; cursor:pointer; border:none; width:100%; transition:opacity .2s; }
+  .btn:disabled { opacity:.4; cursor:not-allowed; }
+  .btn-primary { background:var(--accent); color:#fff; }
+  .btn-success { background:var(--accent2); color:#0f0f13; }
+  .btn-ghost   { background:var(--surface2); color:var(--text); border:1px solid var(--border); }
+  .btn-row { display:flex; gap:10px; }
+  .btn-row .btn { flex:1; }
+  .info-box { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; font-size:13px; color:var(--muted); line-height:1.6; }
+  .info-box strong { color:var(--text); }
+  .summary-row { display:flex; justify-content:space-between; font-size:13px; padding:8px 0; border-bottom:1px solid var(--border); gap:12px; }
+  .summary-row:last-child { border-bottom:none; }
+  .summary-row .lbl { color:var(--muted); flex-shrink:0; }
+  .summary-row .val { color:var(--text); font-weight:500; text-align:right; word-break:break-all; }
+  .result-card { border-radius:var(--radius); padding:20px; display:flex; flex-direction:column; gap:8px; border:1px solid; }
+  .result-card.success { background:rgba(74,222,128,.08); border-color:rgba(74,222,128,.3); }
+  .result-card.error   { background:rgba(248,113,113,.08); border-color:rgba(248,113,113,.3); }
+  .result-card h3 { font-size:16px; font-weight:700; }
+  .result-card.success h3 { color:var(--accent2); }
+  .result-card.error   h3 { color:var(--danger); }
+  .result-card p { font-size:13px; color:var(--muted); }
+  .fax-id { font-family:monospace; font-size:13px; background:var(--surface2); padding:6px 10px; border-radius:8px; display:inline-block; margin-top:4px; }
+  footer { padding:16px 20px; text-align:center; font-size:11px; color:var(--muted); border-top:1px solid var(--border); }
 </style>
 </head>
 <body>
@@ -250,104 +97,95 @@
 </header>
 
 <div class="steps" id="steps">
-  <div class="step-pill active" data-step="1"><span class="num">1</span> Scan / Upload</div>
-  <div class="step-pill" data-step="2"><span class="num">2</span> Review Text</div>
-  <div class="step-pill" data-step="3"><span class="num">3</span> Fax Details</div>
+  <div class="step-pill active" data-step="1"><span class="num">1</span> Scan</div>
+  <div class="step-pill" data-step="2"><span class="num">2</span> OCR Review</div>
+  <div class="step-pill" data-step="3"><span class="num">3</span> Details</div>
   <div class="step-pill" data-step="4"><span class="num">4</span> Send</div>
 </div>
 
 <main>
 
-  <!-- STEP 1: Scan / Upload -->
+  <!-- STEP 1 -->
   <div class="panel active" id="step1">
     <h2>Scan or Upload Document</h2>
-    <p class="sub">Take a photo with your camera or upload an existing PDF / image.</p>
+    <p class="sub">Take a photo or upload a PDF / image.</p>
 
-    <div class="upload-zone" id="drop-zone">
-      <input type="file" id="file-input" accept="image/*,application/pdf" />
+    <div class="upload-zone">
+      <input type="file" id="file-input" accept="image/*,application/pdf">
       <div class="icon">📄</div>
       <h3>Tap to upload</h3>
       <p>PDF, JPG, PNG — up to 20 MB</p>
     </div>
 
-    <div class="or-divider">or</div>
+    <div class="or-div">or</div>
 
-    <label class="btn-camera">
+    <div class="btn-camera">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-      Use Camera
-      <input type="file" id="camera-input" accept="image/*" capture="environment" />
-    </label>
+      📸 Use Camera
+      <input type="file" id="camera-input" accept="image/*" capture="environment">
+    </div>
 
     <div id="preview-wrap">
-      <img id="preview-img" alt="Preview" />
+      <img id="preview-img" alt="Preview">
       <iframe id="preview-pdf" title="PDF Preview"></iframe>
       <div class="preview-label">
-        <span id="preview-name">document.pdf</span>
+        <span id="preview-name"></span>
         <span id="preview-size"></span>
       </div>
     </div>
 
-    <div id="ocr-status" class="ocr-status">
+    <div id="ocr-status">
       <div class="spinner"></div>
       <span id="ocr-msg">Running OCR…</span>
     </div>
 
-    <button class="btn btn-primary" id="btn-next1" disabled>
-      Continue →
-    </button>
+    <button class="btn btn-primary" id="btn-next1" disabled>Continue →</button>
   </div>
 
-  <!-- STEP 2: Review OCR Text -->
+  <!-- STEP 2 -->
   <div class="panel" id="step2">
     <h2>Review Extracted Text</h2>
-    <p class="sub">OCR text is for your reference only — the original file is what gets faxed. Edit if needed.</p>
-
+    <p class="sub">The original file is what gets faxed — this is just a readability check.</p>
     <div>
-      <div class="field-label">Extracted Text</div>
-      <textarea id="ocr-text" placeholder="OCR text will appear here…" rows="8"></textarea>
+      <div class="field-label">OCR Text</div>
+      <textarea id="ocr-text" rows="9" placeholder="OCR text appears here…"></textarea>
     </div>
-
-    <div class="info-box">
-      💡 <strong>Tip:</strong> The IRS receives the original scanned image, not this text. This is just a preview so you can verify the scan looks readable.
-    </div>
-
+    <div class="info-box">💡 <strong>Tip:</strong> Low quality scans may have garbled text — that's OK as long as the image itself is clear.</div>
     <div class="btn-row">
       <button class="btn btn-ghost" onclick="goStep(1)">← Back</button>
       <button class="btn btn-primary" onclick="goStep(3)">Continue →</button>
     </div>
   </div>
 
-  <!-- STEP 3: Fax Details -->
+  <!-- STEP 3 -->
   <div class="panel" id="step3">
     <h2>Fax Details</h2>
-    <p class="sub">Choose a recipient and add an optional cover page note.</p>
+    <p class="sub">Choose a recipient and add an optional cover note.</p>
 
     <div>
       <div class="field-label">IRS Fax Number</div>
       <select id="fax-select" onchange="syncCustom()">
         <option value="">— select a department —</option>
-        <option value="18008290115">General Correspondence — +1 (800) 829-0115</option>
-        <option value="18009783706">CP2000 Notices — +1 (800) 978-3706</option>
-        <option value="18558027636">Lien Release — +1 (855) 802-7636</option>
-        <option value="18555870934">Form 4506 / Transcripts — +1 (855) 587-0934</option>
-        <option value="18777778242">Taxpayer Advocate — +1 (877) 777-8242</option>
-        <option value="custom">Other / Custom number…</option>
+        <option value="18008290115">General Correspondence — (800) 829-0115</option>
+        <option value="18009783706">CP2000 Notices — (800) 978-3706</option>
+        <option value="18558027636">Lien Release — (855) 802-7636</option>
+        <option value="18555870934">Form 4506 / Transcripts — (855) 587-0934</option>
+        <option value="18777778242">Taxpayer Advocate — (877) 777-8242</option>
+        <option value="custom">Other / Custom…</option>
       </select>
     </div>
 
     <div id="custom-wrap" style="display:none">
-      <div class="field-label">Custom Fax Number</div>
-      <input type="text" id="custom-number" placeholder="e.g. 18005551234" inputmode="numeric" />
+      <div class="field-label">Custom Number</div>
+      <input type="text" id="custom-number" placeholder="e.g. 18005551234" inputmode="numeric">
     </div>
 
     <div>
-      <div class="field-label">Cover Page Note <span style="font-weight:400;text-transform:none">(optional)</span></div>
-      <textarea id="cover-text" rows="3" placeholder="e.g. Re: CP2000 Notice, John Doe, SSN ending 4321, Tax Year 2023"></textarea>
+      <div class="field-label">Cover Note <span style="font-weight:400;text-transform:none">(optional)</span></div>
+      <textarea id="cover-text" rows="3" placeholder="e.g. Re: CP2000, John Doe, SSN ending 4321, Tax Year 2023"></textarea>
     </div>
 
-    <div class="info-box">
-      ⚠️ <strong>Verify numbers at irs.gov</strong> — IRS fax numbers change periodically without notice.
-    </div>
+    <div class="info-box">⚠️ <strong>Always verify IRS numbers at irs.gov</strong> — they change without notice.</div>
 
     <div class="btn-row">
       <button class="btn btn-ghost" onclick="goStep(2)">← Back</button>
@@ -355,235 +193,188 @@
     </div>
   </div>
 
-  <!-- STEP 4: Review & Send -->
+  <!-- STEP 4 -->
   <div class="panel" id="step4">
     <h2>Review &amp; Send</h2>
-    <p class="sub">Double-check everything before transmitting.</p>
+    <p class="sub">Double-check before transmitting.</p>
 
-    <div class="info-box" style="display:flex;flex-direction:column;gap:0">
-      <div class="summary-row"><span class="lbl">File</span><span class="val" id="sum-file">—</span></div>
-      <div class="summary-row"><span class="lbl">To</span><span class="val" id="sum-to">—</span></div>
-      <div class="summary-row"><span class="lbl">Cover note</span><span class="val" id="sum-cover">—</span></div>
-      <div class="summary-row"><span class="lbl">Est. cost</span><span class="val" id="sum-cost">—</span></div>
+    <div class="info-box" style="display:flex;flex-direction:column;gap:0;padding:0">
+      <div class="summary-row" style="padding:12px 16px"><span class="lbl">File</span><span class="val" id="sum-file">—</span></div>
+      <div class="summary-row" style="padding:12px 16px"><span class="lbl">To</span><span class="val" id="sum-to">—</span></div>
+      <div class="summary-row" style="padding:12px 16px"><span class="lbl">Cover</span><span class="val" id="sum-cover">—</span></div>
+      <div class="summary-row" style="padding:12px 16px"><span class="lbl">Est. cost</span><span class="val">~$0.07/page via Sinch</span></div>
     </div>
 
     <div id="result-area"></div>
 
     <div class="btn-row" id="send-btns">
       <button class="btn btn-ghost" onclick="goStep(3)">← Back</button>
-      <button class="btn btn-success" id="btn-send" onclick="sendFax()">
-        📠 Send Fax
-      </button>
+      <button class="btn btn-success" id="btn-send" onclick="sendFax()">📠 Send Fax</button>
     </div>
   </div>
 
 </main>
 
-<footer>Powered by Sinch / Phaxio &nbsp;·&nbsp; Logs saved per session</footer>
+<footer>Powered by Sinch / Phaxio &nbsp;·&nbsp; ajoiventures</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>
+// ── Credentials (personal use only) ─────────────────────────────────────────
+const API_KEY    = "d633c79a-c3db-40ce-8298-8b385d0799cb";
+const API_SECRET = "q_IyRpb3MqmGB5rJY2bGnXt-dG";
+
 // ── State ────────────────────────────────────────────────────────────────────
-let currentStep = 1;
 let selectedFile = null;
-let ocrDone = false;
+let currentStep  = 1;
 
 // ── Navigation ───────────────────────────────────────────────────────────────
 function goStep(n) {
-  // Validate before advancing
-  if (n === 3) {
-    if (!selectedFile) return alert('Please select a file first.');
-  }
+  if (n === 3 && !selectedFile) return alert('Please select or capture a document first.');
   if (n === 4) {
     const to = getFaxNumber();
-    if (!to) return alert('Please select a fax number.');
-    if (to.replace(/\D/g,'').length < 10) return alert('Enter a valid fax number.');
-    populateSummary();
+    if (!to || to.length < 10) return alert('Please select a valid fax number.');
+    buildSummary();
   }
-
   currentStep = n;
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('step' + n).classList.add('active');
-
   document.querySelectorAll('.step-pill').forEach(p => {
-    const s = parseInt(p.dataset.step);
+    const s = +p.dataset.step;
     p.classList.toggle('active', s === n);
     p.classList.toggle('done', s < n);
     p.querySelector('.num').textContent = s < n ? '✓' : s;
   });
-
   window.scrollTo({top: 0, behavior: 'smooth'});
 }
 
 // ── File handling ─────────────────────────────────────────────────────────────
 function handleFile(file) {
   if (!file) return;
-  if (file.size > 20 * 1024 * 1024) return alert('File too large (max 20 MB).');
-
+  if (file.size > 20 * 1024 * 1024) return alert('File too large — max 20 MB.');
   selectedFile = file;
-  ocrDone = false;
-  document.getElementById('ocr-text').value = '';
 
   const wrap = document.getElementById('preview-wrap');
   const img  = document.getElementById('preview-img');
   const pdf  = document.getElementById('preview-pdf');
   wrap.classList.add('show');
-
   document.getElementById('preview-name').textContent = file.name;
-  document.getElementById('preview-size').textContent = formatSize(file.size);
+  document.getElementById('preview-size').textContent = fmtSize(file.size);
 
   const url = URL.createObjectURL(file);
-
   if (file.type === 'application/pdf') {
-    pdf.src = url;
-    pdf.style.display = 'block';
-    img.style.display = 'none';
-    // PDF — skip OCR, just mark ready
+    pdf.src = url; pdf.style.display = 'block'; img.style.display = 'none';
     markReady();
   } else {
-    img.src = url;
-    img.style.display = 'block';
-    pdf.style.display = 'none';
+    img.src = url; img.style.display = 'block'; pdf.style.display = 'none';
     runOCR(file);
   }
 }
 
-['file-input','camera-input'].forEach(id => {
-  document.getElementById(id).addEventListener('change', e => handleFile(e.target.files[0]));
-});
-
-// Drag and drop
-const dz = document.getElementById('drop-zone');
-dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
-dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
-dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag'); handleFile(e.dataTransfer.files[0]); });
+document.getElementById('file-input').addEventListener('change',   e => handleFile(e.target.files[0]));
+document.getElementById('camera-input').addEventListener('change', e => handleFile(e.target.files[0]));
 
 // ── OCR ───────────────────────────────────────────────────────────────────────
 async function runOCR(file) {
   const status = document.getElementById('ocr-status');
   const msg    = document.getElementById('ocr-msg');
-  const btn    = document.getElementById('btn-next1');
   status.classList.add('show');
-  btn.disabled = true;
-  msg.textContent = 'Starting OCR…';
-
+  document.getElementById('btn-next1').disabled = true;
   try {
     const worker = await Tesseract.createWorker('eng', 1, {
-      logger: m => {
-        if (m.status === 'recognizing text') {
-          msg.textContent = `OCR ${Math.round(m.progress * 100)}%…`;
-        }
-      }
+      logger: m => { if (m.status === 'recognizing text') msg.textContent = `OCR ${Math.round(m.progress*100)}%…`; }
     });
     const { data: { text } } = await worker.recognize(file);
     await worker.terminate();
-
-    document.getElementById('ocr-text').value = text.trim() || '(No text detected — image may be low quality)';
+    document.getElementById('ocr-text').value = text.trim() || '(No text detected)';
     msg.textContent = '✓ OCR complete';
     status.querySelector('.spinner').style.display = 'none';
-  } catch (err) {
-    msg.textContent = 'OCR failed — file will still be faxed.';
+  } catch {
+    msg.textContent = 'OCR unavailable — file will still fax fine.';
     status.querySelector('.spinner').style.display = 'none';
   }
-
   markReady();
 }
 
 function markReady() {
-  ocrDone = true;
   document.getElementById('btn-next1').disabled = false;
 }
 
-// ── Fax number helpers ────────────────────────────────────────────────────────
+// ── Fax number ────────────────────────────────────────────────────────────────
 function getFaxNumber() {
-  const sel = document.getElementById('fax-select').value;
-  if (sel === 'custom') return document.getElementById('custom-number').value.replace(/\D/g,'');
-  return sel;
+  const v = document.getElementById('fax-select').value;
+  if (v === 'custom') return document.getElementById('custom-number').value.replace(/\D/g,'');
+  return v;
 }
-
 function syncCustom() {
-  const show = document.getElementById('fax-select').value === 'custom';
-  document.getElementById('custom-wrap').style.display = show ? 'block' : 'none';
+  document.getElementById('custom-wrap').style.display =
+    document.getElementById('fax-select').value === 'custom' ? 'block' : 'none';
 }
-
-function formatFaxDisplay(n) {
+function fmtFax(n) {
   if (!n) return '—';
   const d = n.replace(/\D/g,'');
-  if (d.length === 11) return `+${d[0]} (${d.slice(1,4)}) ${d.slice(4,7)}-${d.slice(7)}`;
-  return '+' + d;
+  return d.length === 11 ? `+${d[0]} (${d.slice(1,4)}) ${d.slice(4,7)}-${d.slice(7)}` : '+' + d;
 }
 
 // ── Summary ───────────────────────────────────────────────────────────────────
-function populateSummary() {
-  const to = getFaxNumber();
-  const cover = document.getElementById('cover-text').value.trim();
-  document.getElementById('sum-file').textContent  = selectedFile ? selectedFile.name : '—';
-  document.getElementById('sum-to').textContent    = formatFaxDisplay(to);
-  document.getElementById('sum-cover').textContent = cover || '(none)';
-  // Rough estimate: assume 1-5 pages
-  document.getElementById('sum-cost').textContent  = '~$0.07–$0.35 (1–5 pages via Sinch)';
+function buildSummary() {
+  document.getElementById('sum-file').textContent  = selectedFile?.name || '—';
+  document.getElementById('sum-to').textContent    = fmtFax(getFaxNumber());
+  document.getElementById('sum-cover').textContent = document.getElementById('cover-text').value.trim() || '(none)';
 }
 
-// ── Send Fax ──────────────────────────────────────────────────────────────────
+// ── Send ──────────────────────────────────────────────────────────────────────
 async function sendFax() {
   const btn = document.getElementById('btn-send');
-  const resultArea = document.getElementById('result-area');
-  const to = getFaxNumber();
-
+  const out = document.getElementById('result-area');
   btn.disabled = true;
   btn.textContent = '📡 Sending…';
-  resultArea.innerHTML = '';
+  out.innerHTML = '';
+
+  let digits = getFaxNumber().replace(/\D/g,'');
+  if (digits.length === 10) digits = '1' + digits;
 
   try {
     const fd = new FormData();
-    fd.append('to', to);
-    fd.append('file', selectedFile, selectedFile.name);
+    fd.append('to[0]', '+' + digits);
+    fd.append('file[0]', selectedFile, selectedFile.name);
     const cover = document.getElementById('cover-text').value.trim();
-    if (cover) fd.append('cover', cover);
+    if (cover) fd.append('cover_page_text', cover);
 
-    const resp = await fetch('/.netlify/functions/send-fax', {
+    // Basic auth header
+    const auth = btoa(API_KEY + ':' + API_SECRET);
+    const resp = await fetch('https://api.phaxio.com/v2.1/faxes', {
       method: 'POST',
+      headers: { 'Authorization': 'Basic ' + auth },
       body: fd,
     });
 
     const data = await resp.json();
+    if (!data.success) throw new Error(data.message || 'API error');
 
-    if (!resp.ok || !data.success) {
-      throw new Error(data.message || `HTTP ${resp.status}`);
-    }
-
-    const faxId = data.fax_id;
-    resultArea.innerHTML = `
-      <div class="result-card success">
-        <h3>✅ Fax sent!</h3>
-        <p>Your document is queued for delivery.</p>
-        <p>Fax ID: <span class="fax-id">${faxId}</span></p>
-        <p>Delivery takes 1–5 minutes. Check your Sinch/Phaxio dashboard for status.</p>
-      </div>`;
+    out.innerHTML = `<div class="result-card success">
+      <h3>✅ Fax sent!</h3>
+      <p>Queued for delivery — usually 1–5 minutes.</p>
+      <span class="fax-id">ID: ${data.data?.id}</span>
+    </div>`;
     document.getElementById('send-btns').style.display = 'none';
 
   } catch (err) {
-    resultArea.innerHTML = `
-      <div class="result-card error">
-        <h3>❌ Send failed</h3>
-        <p>${escHtml(err.message)}</p>
-      </div>`;
+    out.innerHTML = `<div class="result-card error">
+      <h3>❌ Failed</h3>
+      <p>${String(err.message).replace(/</g,'&lt;')}</p>
+    </div>`;
     btn.disabled = false;
     btn.textContent = '📠 Retry';
   }
 }
 
 // ── Utils ─────────────────────────────────────────────────────────────────────
-function formatSize(bytes) {
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-  return (bytes / 1024 / 1024).toFixed(1) + ' MB';
-}
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function fmtSize(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  return (b/1048576).toFixed(1) + ' MB';
 }
 
-// Step 1 next button
 document.getElementById('btn-next1').addEventListener('click', () => goStep(2));
 </script>
 </body>
