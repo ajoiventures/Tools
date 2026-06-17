@@ -5,129 +5,297 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>IRS Fax Sender</title>
 <style>
-  :root {
-    --bg:#0f0f13;--surface:#1a1a22;--surface2:#22222e;--border:#2e2e3e;
-    --accent:#6c63ff;--accent2:#4ade80;--danger:#f87171;--warn:#fbbf24;
-    --text:#e8e8f0;--muted:#8888a8;--radius:14px;
-  }
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100dvh;display:flex;flex-direction:column;}
-  header{padding:16px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
-  header h1{font-size:18px;font-weight:700;}
-  header p{font-size:12px;color:var(--muted);margin-top:1px;}
-  .balance-chip{margin-left:auto;font-size:11px;font-weight:700;padding:4px 10px;border-radius:99px;background:var(--surface2);border:1px solid var(--border);white-space:nowrap;}
-  .balance-chip.ok{color:var(--accent2);border-color:rgba(74,222,128,.3);}
-  .balance-chip.low{color:var(--warn);border-color:rgba(251,191,36,.3);}
-  .balance-chip.empty{color:var(--danger);border-color:rgba(248,113,113,.3);}
+:root{
+  --bg:#0f0f13;--surface:#1a1a22;--surface2:#22222e;--border:#2e2e3e;
+  --accent:#6c63ff;--accent2:#4ade80;--danger:#f87171;--warn:#fbbf24;
+  --text:#e8e8f0;--muted:#8888a8;--radius:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100dvh;display:flex;flex-direction:column;overflow-x:hidden;}
 
-  .steps{display:flex;padding:12px 20px;gap:6px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border);}
-  .step-pill{display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:99px;font-size:12px;font-weight:600;white-space:nowrap;background:var(--surface2);color:var(--muted);}
-  .step-pill.active{background:var(--accent);color:#fff;}
-  .step-pill.done{color:var(--accent2);}
-  .step-pill .num{width:17px;height:17px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:10px;}
+/* ── Header ── */
+header{padding:14px 16px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;}
+header h1{font-size:17px;font-weight:700;}
+header p{font-size:11px;color:var(--muted);margin-top:1px;}
+.balance-chip{font-size:11px;font-weight:700;padding:4px 10px;border-radius:99px;background:var(--surface2);border:1px solid var(--border);white-space:nowrap;cursor:pointer;}
+.balance-chip.ok{color:var(--accent2);border-color:rgba(74,222,128,.3);}
+.balance-chip.low{color:var(--warn);border-color:rgba(251,191,36,.3);}
+.balance-chip.empty{color:var(--danger);border-color:rgba(248,113,113,.3);}
+.header-right{display:flex;align-items:center;gap:8px;margin-left:auto;}
+.settings-btn{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px;display:flex;align-items:center;transition:color .2s;}
+.settings-btn:hover{color:var(--text);}
 
-  main{flex:1;padding:20px;max-width:540px;width:100%;margin:0 auto;}
-  .panel{display:none;flex-direction:column;gap:16px;}
-  .panel.active{display:flex;}
-  h2{font-size:17px;font-weight:700;}
-  p.sub{font-size:13px;color:var(--muted);line-height:1.5;}
+/* ── Steps ── */
+.steps{display:flex;padding:10px 16px;gap:6px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border);flex-shrink:0;}
+.step-pill{display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:99px;font-size:12px;font-weight:600;white-space:nowrap;background:var(--surface2);color:var(--muted);}
+.step-pill.active{background:var(--accent);color:#fff;}
+.step-pill.done{color:var(--accent2);}
+.step-pill .num{width:17px;height:17px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:10px;}
 
-  /* Processing banner */
-  .proc-banner{display:none;align-items:center;gap:10px;padding:10px 14px;background:rgba(108,99,255,.1);border:1px solid rgba(108,99,255,.3);border-radius:var(--radius);font-size:13px;}
-  .proc-banner.show{display:flex;}
-  .spinner{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--accent);animation:spin .7s linear infinite;flex-shrink:0;}
-  @keyframes spin{to{transform:rotate(360deg);}}
+/* ── Main ── */
+main{flex:1;padding:18px 16px;max-width:540px;width:100%;margin:0 auto;}
+.panel{display:none;flex-direction:column;gap:14px;}
+.panel.active{display:flex;}
+h2{font-size:16px;font-weight:700;}
+p.sub{font-size:13px;color:var(--muted);line-height:1.5;}
 
-  /* Grid */
-  .cam-row{display:flex;gap:10px;}
-  .btn-camera{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:14px;font-weight:600;cursor:pointer;position:relative;}
-  .btn-camera input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+/* ── Settings drawer ── */
+.drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;opacity:0;pointer-events:none;transition:opacity .25s;}
+.drawer-overlay.open{opacity:1;pointer-events:all;}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(360px,100vw);background:var(--surface);z-index:201;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-4px 0 24px rgba(0,0,0,.4);}
+.drawer.open{transform:translateX(0);}
+.drawer-head{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.drawer-head h3{font-size:15px;font-weight:700;}
+.drawer-close{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;padding:2px 6px;}
+.drawer-close:hover{color:var(--text);}
+.drawer-body{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:20px;}
+.drawer-foot{padding:14px 16px;border-top:1px solid var(--border);display:flex;gap:10px;}
 
-  .page-count{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--muted);}
-  .page-count strong{color:var(--text);}
-  .badge{background:var(--accent);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;}
+/* ── Settings sections ── */
+.s-section{display:flex;flex-direction:column;gap:10px;}
+.s-section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding-bottom:4px;border-bottom:1px solid var(--border);}
+.s-row{display:flex;flex-direction:column;gap:5px;}
+.s-row label{font-size:12px;font-weight:600;color:var(--muted);}
+.s-row input,.s-row select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;padding:10px 12px;font-size:13px;outline:none;}
+.s-row input:focus,.s-row select:focus{border-color:var(--accent);}
+.s-row input[type=password]{letter-spacing:.1em;}
+.s-row .hint{font-size:11px;color:var(--muted);line-height:1.4;}
+.s-row .hint a{color:var(--accent);text-decoration:none;}
+.s-toggle-row{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.s-toggle-row .s-label{font-size:13px;}
+.s-toggle-row .s-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.toggle{position:relative;width:42px;height:24px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-track{position:absolute;inset:0;background:var(--border);border-radius:99px;cursor:pointer;transition:background .2s;}
+.toggle input:checked + .toggle-track{background:var(--accent);}
+.toggle-thumb{position:absolute;top:3px;left:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:transform .2s;}
+.toggle input:checked ~ .toggle-thumb{transform:translateX(18px);}
 
-  .page-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
-  .page-thumb{position:relative;border-radius:10px;overflow:hidden;background:var(--surface2);border:1px solid var(--border);aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;}
-  .page-thumb img{width:100%;height:100%;object-fit:cover;}
-  .page-thumb .pg-num{position:absolute;top:5px;left:5px;background:rgba(0,0,0,.7);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:99px;}
-  .page-thumb .pg-del{position:absolute;top:5px;right:5px;background:rgba(248,113,113,.9);color:#fff;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-weight:700;}
-  .page-thumb .pg-processing{position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:11px;color:#fff;}
+/* Status pill in settings */
+.status-pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:99px;border:1px solid var(--border);background:var(--surface2);}
+.status-pill.ok{color:var(--accent2);border-color:rgba(74,222,128,.3);}
+.status-pill.fail{color:var(--danger);border-color:rgba(248,113,113,.3);}
+.status-pill.checking{color:var(--warn);}
 
-  .add-tile{border-radius:10px;border:2px dashed var(--border);aspect-ratio:3/4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;color:var(--muted);font-size:11px;font-weight:600;position:relative;transition:border-color .2s;}
-  .add-tile:hover{border-color:var(--accent);color:var(--accent);}
-  .add-tile input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
-  .add-tile .big{font-size:28px;}
+/* ── Image processing ── */
+.proc-banner{display:none;align-items:center;gap:10px;padding:10px 14px;background:rgba(108,99,255,.1);border:1px solid rgba(108,99,255,.3);border-radius:var(--radius);font-size:13px;}
+.proc-banner.show{display:flex;}
+.spinner{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--accent);animation:spin .7s linear infinite;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg);}}
 
-  /* Fields */
-  .field-label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
-  textarea,select,input[type=text]{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:inherit;padding:12px 14px;font-size:14px;resize:vertical;outline:none;transition:border-color .2s;}
-  textarea:focus,select:focus,input[type=text]:focus{border-color:var(--accent);}
-  select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238888a8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;cursor:pointer;}
-  select option{background:var(--surface2);}
-  textarea{min-height:100px;}
+/* ── Grid ── */
+.cam-row{display:flex;gap:10px;}
+.btn-camera{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:14px;font-weight:600;cursor:pointer;position:relative;}
+.btn-camera input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.page-count{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--muted);}
+.page-count strong{color:var(--text);}
+.badge{background:var(--accent);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;}
+.page-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.page-thumb{position:relative;border-radius:10px;overflow:hidden;background:var(--surface2);border:1px solid var(--border);aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;}
+.page-thumb img{width:100%;height:100%;object-fit:cover;}
+.page-thumb .pg-num{position:absolute;top:5px;left:5px;background:rgba(0,0,0,.7);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:99px;}
+.page-thumb .pg-del{position:absolute;top:5px;right:5px;background:rgba(248,113,113,.9);color:#fff;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-weight:700;}
+.page-thumb .pg-processing{position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:11px;color:#fff;}
+.add-tile{border-radius:10px;border:2px dashed var(--border);aspect-ratio:3/4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;color:var(--muted);font-size:11px;font-weight:600;position:relative;transition:border-color .2s;}
+.add-tile:hover{border-color:var(--accent);color:var(--accent);}
+.add-tile input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.add-tile .big{font-size:26px;}
 
-  /* Buttons */
-  .btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:15px 20px;border-radius:var(--radius);font-size:15px;font-weight:700;cursor:pointer;border:none;width:100%;transition:opacity .2s;}
-  .btn:disabled{opacity:.4;cursor:not-allowed;}
-  .btn:active:not(:disabled){opacity:.85;}
-  .btn-primary{background:var(--accent);color:#fff;}
-  .btn-success{background:var(--accent2);color:#0f0f13;}
-  .btn-ghost{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
-  .btn-row{display:flex;gap:10px;}
-  .btn-row .btn{flex:1;}
+/* ── Fields ── */
+.field-label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+textarea,select,input[type=text]{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:inherit;padding:11px 13px;font-size:14px;resize:vertical;outline:none;transition:border-color .2s;}
+textarea:focus,select:focus,input[type=text]:focus{border-color:var(--accent);}
+select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238888a8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;cursor:pointer;}
+select option{background:var(--surface2);}
+textarea{min-height:90px;}
 
-  .info-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;font-size:13px;color:var(--muted);line-height:1.6;}
-  .info-box strong{color:var(--text);}
+/* ── Buttons ── */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 20px;border-radius:var(--radius);font-size:15px;font-weight:700;cursor:pointer;border:none;width:100%;transition:opacity .2s;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn:active:not(:disabled){opacity:.82;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-success{background:var(--accent2);color:#0f0f13;}
+.btn-ghost{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+.btn-sm{padding:8px 14px;font-size:13px;border-radius:10px;}
+.btn-row{display:flex;gap:10px;}
+.btn-row .btn{flex:1;}
+.info-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:13px 15px;font-size:13px;color:var(--muted);line-height:1.6;}
+.info-box strong{color:var(--text);}
+.info-box a{color:var(--accent);text-decoration:none;}
 
-  /* Summary */
-  .summary-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
-  .summary-row{display:flex;justify-content:space-between;font-size:13px;padding:11px 16px;border-bottom:1px solid var(--border);gap:12px;}
-  .summary-row:last-child{border-bottom:none;}
-  .summary-row .lbl{color:var(--muted);flex-shrink:0;}
-  .summary-row .val{color:var(--text);font-weight:500;text-align:right;word-break:break-all;}
+/* ── Summary ── */
+.summary-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.summary-row{display:flex;justify-content:space-between;font-size:13px;padding:10px 15px;border-bottom:1px solid var(--border);gap:12px;}
+.summary-row:last-child{border-bottom:none;}
+.summary-row .lbl{color:var(--muted);flex-shrink:0;}
+.summary-row .val{color:var(--text);font-weight:500;text-align:right;word-break:break-all;}
 
-  /* Thumb strip */
-  .thumb-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;}
-  .thumb-strip img{height:64px;width:48px;object-fit:cover;border-radius:6px;border:2px solid transparent;cursor:pointer;flex-shrink:0;}
-  .thumb-strip img.active{border-color:var(--accent);}
+/* ── Thumb strip ── */
+.thumb-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;}
+.thumb-strip img{height:62px;width:46px;object-fit:cover;border-radius:6px;border:2px solid transparent;cursor:pointer;flex-shrink:0;}
+.thumb-strip img.active{border-color:var(--accent);}
+#ocr-status{display:none;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);font-size:13px;}
+#ocr-status.show{display:flex;}
 
-  /* OCR status */
-  #ocr-status{display:none;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);font-size:13px;}
-  #ocr-status.show{display:flex;}
+/* ── Result / delivery ── */
+.result-card{border-radius:var(--radius);padding:18px;display:flex;flex-direction:column;gap:10px;border:1px solid;}
+.result-card.success{background:rgba(74,222,128,.08);border-color:rgba(74,222,128,.3);}
+.result-card.error{background:rgba(248,113,113,.08);border-color:rgba(248,113,113,.3);}
+.result-card.pending{background:rgba(108,99,255,.08);border-color:rgba(108,99,255,.3);}
+.result-card h3{font-size:15px;font-weight:700;}
+.result-card.success h3{color:var(--accent2);}
+.result-card.error   h3{color:var(--danger);}
+.result-card.pending h3{color:var(--accent);}
+.result-card p{font-size:13px;color:var(--muted);line-height:1.5;}
+.fax-id{font-family:monospace;font-size:12px;background:var(--surface2);padding:5px 9px;border-radius:8px;display:inline-block;}
+.delivery-track{display:flex;flex-direction:column;gap:8px;}
+.delivery-step{display:flex;align-items:center;gap:10px;font-size:13px;}
+.delivery-step .dot{width:10px;height:10px;border-radius:50%;background:var(--border);flex-shrink:0;}
+.delivery-step.done   .dot{background:var(--accent2);}
+.delivery-step.active .dot{background:var(--accent);animation:pulse 1s infinite;}
+.delivery-step.failed .dot{background:var(--danger);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+.delivery-step .dlabel{color:var(--muted);}
+.delivery-step.done   .dlabel{color:var(--text);}
+.delivery-step.active .dlabel{color:var(--accent);}
+.delivery-step.failed .dlabel{color:var(--danger);}
 
-  /* Result */
-  .result-card{border-radius:var(--radius);padding:20px;display:flex;flex-direction:column;gap:10px;border:1px solid;}
-  .result-card.success{background:rgba(74,222,128,.08);border-color:rgba(74,222,128,.3);}
-  .result-card.error{background:rgba(248,113,113,.08);border-color:rgba(248,113,113,.3);}
-  .result-card.pending{background:rgba(108,99,255,.08);border-color:rgba(108,99,255,.3);}
-  .result-card h3{font-size:16px;font-weight:700;}
-  .result-card.success h3{color:var(--accent2);}
-  .result-card.error   h3{color:var(--danger);}
-  .result-card.pending h3{color:var(--accent);}
-  .result-card p{font-size:13px;color:var(--muted);line-height:1.5;}
-  .fax-id{font-family:monospace;font-size:13px;background:var(--surface2);padding:6px 10px;border-radius:8px;display:inline-block;}
-
-  /* Delivery tracker */
-  .delivery-track{display:flex;flex-direction:column;gap:8px;}
-  .delivery-step{display:flex;align-items:center;gap:10px;font-size:13px;}
-  .delivery-step .dot{width:10px;height:10px;border-radius:50%;background:var(--border);flex-shrink:0;}
-  .delivery-step.done .dot{background:var(--accent2);}
-  .delivery-step.active .dot{background:var(--accent);animation:pulse 1s infinite;}
-  .delivery-step.failed .dot{background:var(--danger);}
-  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
-  .delivery-step .dlabel{color:var(--muted);}
-  .delivery-step.done .dlabel{color:var(--text);}
-  .delivery-step.active .dlabel{color:var(--accent);}
-  .delivery-step.failed .dlabel{color:var(--danger);}
-
-  footer{padding:14px 20px;text-align:center;font-size:11px;color:var(--muted);border-top:1px solid var(--border);}
+footer{padding:12px 16px;text-align:center;font-size:11px;color:var(--muted);border-top:1px solid var(--border);}
 </style>
 </head>
 <body>
 
+<!-- ══════════════════ SETTINGS DRAWER ══════════════════ -->
+<div class="drawer-overlay" id="overlay" onclick="closeSettings()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-head">
+    <h3>⚙️ Settings</h3>
+    <button class="drawer-close" onclick="closeSettings()">×</button>
+  </div>
+
+  <div class="drawer-body">
+
+    <!-- Account status -->
+    <div class="s-section">
+      <div class="s-section-title">Account Status</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <span id="conn-status" class="status-pill checking">⏳ Not checked</span>
+        <button class="btn btn-ghost btn-sm" onclick="testConnection()">Test Connection</button>
+      </div>
+      <div class="s-row">
+        <span class="hint" id="balance-detail">Balance will show after testing connection.</span>
+      </div>
+      <div class="s-row">
+        <span class="hint">Top up at <a href="https://console.sinch.com" target="_blank">console.sinch.com</a> &nbsp;·&nbsp; ~$0.07/page</span>
+      </div>
+    </div>
+
+    <!-- API credentials -->
+    <div class="s-section">
+      <div class="s-section-title">Sinch / Phaxio Credentials</div>
+      <div class="s-row">
+        <label>API Key ID</label>
+        <input type="text" id="s-key" placeholder="d633c79a-…" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="s-row">
+        <label>API Secret</label>
+        <input type="password" id="s-secret" placeholder="q_IyRp…" autocomplete="new-password">
+      </div>
+      <div class="s-row">
+        <span class="hint">Find these at <a href="https://console.sinch.com" target="_blank">console.sinch.com</a> → Access Keys</span>
+      </div>
+    </div>
+
+    <!-- Proxy / CORS -->
+    <div class="s-section">
+      <div class="s-section-title">CORS Proxy (required for sending)</div>
+      <div class="s-row">
+        <label>Cloudflare Worker URL</label>
+        <input type="text" id="s-proxy" placeholder="https://fax-proxy.yourname.workers.dev" autocomplete="off">
+        <span class="hint" style="margin-top:4px">Without this, the browser cannot reach the Phaxio API. Free to set up — <a href="https://workers.cloudflare.com" target="_blank">workers.cloudflare.com</a></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span id="proxy-status" class="status-pill" style="display:none"></span>
+      </div>
+    </div>
+
+    <!-- Image processing -->
+    <div class="s-section">
+      <div class="s-section-title">Image Processing</div>
+      <div class="s-toggle-row">
+        <div>
+          <div class="s-label">Auto B&amp;W conversion</div>
+          <div class="s-sub">Convert photos to grayscale for cleaner fax</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="s-bw" checked>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="s-toggle-row">
+        <div>
+          <div class="s-label">Auto-rotate landscape photos</div>
+          <div class="s-sub">Flip sideways shots to portrait</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="s-rotate" checked>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="s-toggle-row">
+        <div>
+          <div class="s-label">Contrast boost</div>
+          <div class="s-sub">Make text sharper and darker</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="s-contrast" checked>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+      <div class="s-row">
+        <label>JPEG quality (lower = smaller file)</label>
+        <select id="s-quality">
+          <option value="0.95">95% — Best quality</option>
+          <option value="0.85" selected>85% — Recommended</option>
+          <option value="0.70">70% — Smaller file</option>
+          <option value="0.55">55% — Minimum</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Sender info -->
+    <div class="s-section">
+      <div class="s-section-title">Cover Page Defaults</div>
+      <div class="s-row">
+        <label>Default sender name</label>
+        <input type="text" id="s-sender" placeholder="e.g. John Doe">
+      </div>
+      <div class="s-row">
+        <label>Default cover note</label>
+        <input type="text" id="s-cover-default" placeholder="e.g. Please process at your earliest convenience">
+      </div>
+    </div>
+
+    <!-- Danger zone -->
+    <div class="s-section">
+      <div class="s-section-title">Data</div>
+      <button class="btn btn-ghost btn-sm" onclick="clearSettings()" style="width:auto">🗑 Clear all saved settings</button>
+    </div>
+
+  </div>
+
+  <div class="drawer-foot">
+    <button class="btn btn-ghost" style="flex:1" onclick="closeSettings()">Cancel</button>
+    <button class="btn btn-primary" style="flex:2" onclick="saveSettings()">💾 Save Settings</button>
+  </div>
+</div>
+
+<!-- ══════════════════ HEADER ══════════════════ -->
 <header>
-  <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+  <svg width="26" height="26" viewBox="0 0 28 28" fill="none">
     <rect width="28" height="28" rx="8" fill="#6c63ff"/>
     <path d="M7 8h14v8H7zM9 16v4h10v-4" stroke="#fff" stroke-width="1.8" stroke-linejoin="round" fill="none"/>
     <circle cx="19" cy="11" r="1.2" fill="#fff"/>
@@ -136,7 +304,14 @@
     <h1>IRS Fax Sender</h1>
     <p>Scan multiple pages &amp; fax in one shot</p>
   </div>
-  <div class="balance-chip" id="balance-chip" title="Sinch account balance">⏳ Balance</div>
+  <div class="header-right">
+    <div class="balance-chip" id="balance-chip" onclick="openSettings()" title="Tap to open settings">⏳</div>
+    <button class="settings-btn" onclick="openSettings()" title="Settings">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
+  </div>
 </header>
 
 <div class="steps">
@@ -148,14 +323,13 @@
 
 <main>
 
-  <!-- STEP 1: Capture -->
+  <!-- STEP 1 -->
   <div class="panel active" id="step1">
     <h2>Scan Your Pages</h2>
-    <p class="sub">Take photos one by one. Each image is auto-cropped, resized, and converted to fax-ready B&amp;W.</p>
-
+    <p class="sub">Take photos one by one. Each image is auto-resized and converted to fax-ready B&amp;W.</p>
     <div class="cam-row">
       <label class="btn-camera">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
         📸 Camera
         <input type="file" id="camera-input" accept="image/*" capture="environment">
       </label>
@@ -164,55 +338,41 @@
         <input type="file" id="file-input" accept="image/*,application/pdf" multiple>
       </label>
     </div>
-
     <div class="proc-banner" id="proc-banner">
       <div class="spinner"></div>
-      <span id="proc-msg">Processing image…</span>
+      <span id="proc-msg">Processing…</span>
     </div>
-
     <div class="page-count" id="page-count" style="display:none">
       <span>Pages ready: <strong id="pg-num">0</strong></span>
       <span class="badge" id="pg-badge">0 pages</span>
     </div>
-
     <div class="page-grid" id="page-grid"></div>
-
-    <div id="no-pages" class="info-box" style="text-align:center;padding:24px 16px">
+    <div id="no-pages" class="info-box" style="text-align:center;padding:22px 16px">
       📷 No pages yet — tap Camera or Upload
     </div>
-
     <button class="btn btn-primary" id="btn-next1" disabled>Review Pages →</button>
   </div>
 
-  <!-- STEP 2: Review -->
+  <!-- STEP 2 -->
   <div class="panel" id="step2">
     <h2>Review Pages</h2>
-    <p class="sub">Tap a thumbnail to check the processed image and its OCR text.</p>
-
+    <p class="sub">Tap a thumbnail to check the image and verify it's readable.</p>
     <div class="thumb-strip" id="thumb-strip"></div>
-
-    <div id="ocr-status">
-      <div class="spinner"></div>
-      <span id="ocr-msg">Reading text…</span>
-    </div>
-
+    <div id="ocr-status"><div class="spinner"></div><span id="ocr-msg">Reading…</span></div>
     <div>
-      <div class="field-label">Extracted Text — Page <span id="ocr-page-label">1</span></div>
+      <div class="field-label">OCR Text — Page <span id="ocr-page-label">1</span></div>
       <textarea id="ocr-text" rows="7" placeholder="Select a page above…" readonly></textarea>
     </div>
-
-    <div class="info-box">💡 <strong>Tip:</strong> The processed (B&amp;W, cropped) image is what gets faxed. Text here is just your readability check.</div>
-
+    <div class="info-box">💡 <strong>Tip:</strong> The processed B&amp;W image is faxed — this text is just a readability check.</div>
     <div class="btn-row">
       <button class="btn btn-ghost" onclick="goStep(1)">← Back</button>
       <button class="btn btn-primary" onclick="goStep(3)">Continue →</button>
     </div>
   </div>
 
-  <!-- STEP 3: Details -->
+  <!-- STEP 3 -->
   <div class="panel" id="step3">
     <h2>Fax Details</h2>
-
     <div>
       <div class="field-label">IRS Fax Number</div>
       <select id="fax-select" onchange="syncCustom()">
@@ -225,43 +385,36 @@
         <option value="custom">Other / Custom…</option>
       </select>
     </div>
-
     <div id="custom-wrap" style="display:none">
       <div class="field-label">Custom Number</div>
       <input type="text" id="custom-number" placeholder="e.g. 18005551234" inputmode="numeric">
     </div>
-
     <div>
       <div class="field-label">Cover Note <span style="font-weight:400;text-transform:none">(optional)</span></div>
-      <textarea id="cover-text" rows="3" placeholder="e.g. Re: CP2000, John Doe, SSN ending 4321, Tax Year 2023"></textarea>
+      <textarea id="cover-text" rows="3" placeholder="e.g. Re: CP2000, John Doe, SSN ending 4321"></textarea>
     </div>
-
-    <div class="info-box">⚠️ <strong>Always verify IRS numbers at irs.gov</strong> — they change without notice.</div>
-
+    <div class="info-box">⚠️ <strong>Verify IRS numbers at <a href="https://irs.gov" target="_blank">irs.gov</a></strong> — they change without notice.</div>
     <div class="btn-row">
       <button class="btn btn-ghost" onclick="goStep(2)">← Back</button>
       <button class="btn btn-primary" onclick="goStep(4)">Review &amp; Send →</button>
     </div>
   </div>
 
-  <!-- STEP 4: Send -->
+  <!-- STEP 4 -->
   <div class="panel" id="step4">
     <h2>Review &amp; Send</h2>
-
     <div class="summary-box">
       <div class="summary-row"><span class="lbl">Pages</span><span class="val" id="sum-pages">—</span></div>
       <div class="summary-row"><span class="lbl">To</span><span class="val" id="sum-to">—</span></div>
       <div class="summary-row"><span class="lbl">Cover</span><span class="val" id="sum-cover">—</span></div>
       <div class="summary-row"><span class="lbl">Est. cost</span><span class="val" id="sum-cost">—</span></div>
       <div class="summary-row"><span class="lbl">Balance</span><span class="val" id="sum-balance">—</span></div>
+      <div class="summary-row"><span class="lbl">Proxy</span><span class="val" id="sum-proxy">—</span></div>
     </div>
-
-    <div id="balance-warn" style="display:none" class="info-box" style="border-color:rgba(251,191,36,.4)">
-      ⚠️ <strong>Low balance.</strong> Top up at <a href="https://console.sinch.com" target="_blank" style="color:var(--accent)">console.sinch.com</a> to avoid send failure.
+    <div id="no-proxy-warn" class="info-box" style="display:none">
+      ⚠️ <strong>No proxy set.</strong> Sending may fail due to CORS. <a href="#" onclick="openSettings();return false">Add a Cloudflare Worker URL in Settings →</a>
     </div>
-
     <div id="result-area"></div>
-
     <div class="btn-row" id="send-btns">
       <button class="btn btn-ghost" onclick="goStep(3)">← Back</button>
       <button class="btn btn-success" id="btn-send" onclick="sendFax()">📠 Send Fax</button>
@@ -270,432 +423,379 @@
 
 </main>
 
-<footer>Powered by Sinch / Phaxio &nbsp;·&nbsp; ajoiventures</footer>
+<footer>Powered by Sinch / Phaxio &nbsp;·&nbsp; ajoiventures &nbsp;·&nbsp; <a href="#" onclick="openSettings();return false" style="color:var(--accent);text-decoration:none">Settings</a></footer>
 
-<!-- Hidden canvas for image processing -->
 <canvas id="proc-canvas" style="display:none"></canvas>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>
-// ── Credentials ───────────────────────────────────────────────────────────────
-const API_KEY    = "d633c79a-c3db-40ce-8298-8b385d0799cb";
-const API_SECRET = "q_IyRpb3MqmGB5rJY2bGnXt-dG";
-const AUTH       = 'Basic ' + btoa(API_KEY + ':' + API_SECRET);
+// ── Default credentials (overridden by localStorage) ─────────────────────────
+const DEFAULTS = {
+  key:    "d633c79a-c3db-40ce-8298-8b385d0799cb",
+  secret: "q_IyRpb3MqmGB5rJY2bGnXt-dG",
+  proxy:  "",
+  bw:        true,
+  rotate:    true,
+  contrast:  true,
+  quality:   "0.85",
+  sender:    "",
+  coverDef:  "",
+};
 
-// Fax standard: 1728px wide at 196 DPI = US Letter portrait
-const FAX_WIDTH  = 1728;
-const FAX_HEIGHT = 2236; // letter ratio
+// ── Load settings from localStorage ──────────────────────────────────────────
+function loadSettings() {
+  try { return Object.assign({}, DEFAULTS, JSON.parse(localStorage.getItem('fax_settings') || '{}')); }
+  catch { return { ...DEFAULTS }; }
+}
+function saveSettingsData(s) {
+  localStorage.setItem('fax_settings', JSON.stringify(s));
+}
+let CFG = loadSettings();
+function getAuth() { return 'Basic ' + btoa(CFG.key + ':' + CFG.secret); }
+function getEndpoint() {
+  return CFG.proxy
+    ? CFG.proxy.replace(/\/$/, '') + '/v2.1/faxes'
+    : 'https://api.phaxio.com/v2.1/faxes';
+}
 
-// ── State ─────────────────────────────────────────────────────────────────────
-let pages       = [];    // [{blob, url, ocr}]
-let ocrCache    = {};
-let currentBal  = null;
-let pollTimer   = null;
+// ── Settings drawer ───────────────────────────────────────────────────────────
+function openSettings() {
+  document.getElementById('s-key').value          = CFG.key;
+  document.getElementById('s-secret').value       = CFG.secret;
+  document.getElementById('s-proxy').value        = CFG.proxy;
+  document.getElementById('s-bw').checked         = CFG.bw;
+  document.getElementById('s-rotate').checked     = CFG.rotate;
+  document.getElementById('s-contrast').checked   = CFG.contrast;
+  document.getElementById('s-quality').value      = CFG.quality;
+  document.getElementById('s-sender').value       = CFG.sender;
+  document.getElementById('s-cover-default').value = CFG.coverDef;
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeSettings() {
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function saveSettings() {
+  CFG = {
+    key:      document.getElementById('s-key').value.trim()    || DEFAULTS.key,
+    secret:   document.getElementById('s-secret').value.trim() || DEFAULTS.secret,
+    proxy:    document.getElementById('s-proxy').value.trim(),
+    bw:       document.getElementById('s-bw').checked,
+    rotate:   document.getElementById('s-rotate').checked,
+    contrast: document.getElementById('s-contrast').checked,
+    quality:  document.getElementById('s-quality').value,
+    sender:   document.getElementById('s-sender').value.trim(),
+    coverDef: document.getElementById('s-cover-default').value.trim(),
+  };
+  saveSettingsData(CFG);
+  closeSettings();
+  checkBalance();
+  showToast('Settings saved ✓');
+}
+function clearSettings() {
+  if (!confirm('Clear all saved settings and restore defaults?')) return;
+  localStorage.removeItem('fax_settings');
+  CFG = { ...DEFAULTS };
+  closeSettings();
+  showToast('Settings cleared');
+}
 
-// ── Balance check (runs on load) ──────────────────────────────────────────────
-async function checkBalance() {
-  const chip = document.getElementById('balance-chip');
+async function testConnection() {
+  const pill = document.getElementById('conn-status');
+  const detail = document.getElementById('balance-detail');
+  pill.className = 'status-pill checking';
+  pill.textContent = '⏳ Checking…';
   try {
-    const r = await fetch('https://api.phaxio.com/v2.1/public/countries', {
-      headers: { 'Authorization': AUTH }
-    });
-    // We can't directly get balance via simple CORS-safe endpoint,
-    // so try the account endpoint
-    const r2 = await fetch('https://api.phaxio.com/v2.1/account/status', {
-      headers: { 'Authorization': AUTH }
-    });
-    if (!r2.ok) throw new Error('CORS blocked');
-    const d = await r2.json();
-    const bal = d.data?.balance ?? null; // in cents
-    currentBal = bal;
-    if (bal === null) throw new Error('No balance data');
+    const key    = document.getElementById('s-key').value.trim()    || CFG.key;
+    const secret = document.getElementById('s-secret').value.trim() || CFG.secret;
+    const auth   = 'Basic ' + btoa(key + ':' + secret);
+    const proxy  = document.getElementById('s-proxy').value.trim();
+    const base   = proxy ? proxy.replace(/\/$/, '') : 'https://api.phaxio.com';
+    const r = await fetch(`${base}/v2.1/account/status`, { headers: { 'Authorization': auth } });
+    const d = await r.json();
+    if (!d.success) throw new Error(d.message || 'Auth failed');
+    const bal = d.data?.balance ?? 0;
     const dollars = (bal / 100).toFixed(2);
-    chip.textContent = `$${dollars}`;
-    chip.className   = 'balance-chip ' + (bal > 100 ? 'ok' : bal > 0 ? 'low' : 'empty');
-    document.getElementById('sum-balance').textContent = `$${dollars}`;
-    if (bal < 100) document.getElementById('balance-warn').style.display = 'block';
+    pill.className = 'status-pill ok';
+    pill.textContent = `✓ Connected — $${dollars}`;
+    detail.textContent = `Balance: $${dollars} — enough for ~${Math.floor(bal / 7)} pages`;
+    updateBalanceChip(bal);
   } catch (e) {
-    chip.textContent = '⚠️ CORS';
-    chip.className   = 'balance-chip low';
-    chip.title       = 'Cannot check balance from browser — API may block direct calls. Fax may still work.';
-    document.getElementById('sum-balance').textContent = 'Cannot verify (CORS)';
+    pill.className = 'status-pill fail';
+    pill.textContent = '✗ ' + (e.message.includes('fetch') ? 'CORS blocked — add proxy URL' : e.message);
+    detail.textContent = 'Connection failed. Check credentials or add a proxy URL.';
+    updateBalanceChip(null);
   }
+}
+
+// ── Balance chip ──────────────────────────────────────────────────────────────
+function updateBalanceChip(cents) {
+  const chip = document.getElementById('balance-chip');
+  if (cents === null) { chip.textContent = '⚠️'; chip.className = 'balance-chip low'; return; }
+  const s = `$${(cents/100).toFixed(2)}`;
+  chip.textContent = s;
+  chip.className   = 'balance-chip ' + (cents > 100 ? 'ok' : cents > 0 ? 'low' : 'empty');
+  document.getElementById('sum-balance').textContent = s + (cents < 100 ? ' ⚠️ Low — top up before sending' : '');
+}
+async function checkBalance() {
+  try {
+    const r = await fetch((CFG.proxy ? CFG.proxy.replace(/\//,'') : 'https://api.phaxio.com') + '/v2.1/account/status',
+      { headers: { 'Authorization': getAuth() } });
+    const d = await r.json();
+    if (d.success) updateBalanceChip(d.data?.balance ?? 0);
+    else throw new Error();
+  } catch { updateBalanceChip(null); }
 }
 checkBalance();
 
-// ── Image processing ──────────────────────────────────────────────────────────
-async function processImage(file) {
-  return new Promise((resolve) => {
-    if (file.type === 'application/pdf') {
-      // PDFs pass through unchanged
-      resolve(file);
-      return;
-    }
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  Object.assign(t.style, {
+    position:'fixed',bottom:'80px',left:'50%',transform:'translateX(-50%)',
+    background:'var(--surface2)',color:'var(--text)',border:'1px solid var(--border)',
+    padding:'10px 18px',borderRadius:'99px',fontSize:'13px',fontWeight:'600',
+    zIndex:'999',whiteSpace:'nowrap',boxShadow:'0 4px 16px rgba(0,0,0,.3)'
+  });
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2200);
+}
 
+// ── Image processing ──────────────────────────────────────────────────────────
+const FAX_W = 1728, FAX_H = 2236;
+async function processImage(file) {
+  return new Promise(resolve => {
+    if (file.type === 'application/pdf') { resolve(file); return; }
     const img = new Image();
     const url = URL.createObjectURL(file);
     img.onload = () => {
       URL.revokeObjectURL(url);
-
       const canvas = document.getElementById('proc-canvas');
       const ctx    = canvas.getContext('2d');
-
-      // Determine scale — fit to fax letter size, preserve aspect ratio
-      const srcW = img.naturalWidth;
-      const srcH = img.naturalHeight;
-
-      // Auto-rotate: if image is wider than tall (landscape), rotate 90°
-      const isLandscape = srcW > srcH;
-      const drawW = isLandscape ? srcH : srcW;
-      const drawH = isLandscape ? srcW : srcH;
-
-      const scale  = Math.min(FAX_WIDTH / drawW, FAX_HEIGHT / drawH);
-      const outW   = Math.round(drawW * scale);
-      const outH   = Math.round(drawH * scale);
-
-      canvas.width  = outW;
-      canvas.height = outH;
-
+      const sw = img.naturalWidth, sh = img.naturalHeight;
+      const isLand = CFG.rotate && sw > sh;
+      const dw = isLand ? sh : sw, dh = isLand ? sw : sh;
+      const scale = Math.min(FAX_W / dw, FAX_H / dh);
+      const ow = Math.round(dw * scale), oh = Math.round(dh * scale);
+      canvas.width = ow; canvas.height = oh;
       ctx.save();
-      if (isLandscape) {
-        // Rotate portrait
-        ctx.translate(outW / 2, outH / 2);
-        ctx.rotate(Math.PI / 2);
-        ctx.drawImage(img, -outH / 2, -outW / 2, outH, outW);
+      if (isLand) {
+        ctx.translate(ow/2, oh/2); ctx.rotate(Math.PI/2);
+        ctx.drawImage(img, -oh/2, -ow/2, oh, ow);
       } else {
-        ctx.drawImage(img, 0, 0, outW, outH);
+        ctx.drawImage(img, 0, 0, ow, oh);
       }
       ctx.restore();
-
-      // ── Grayscale + contrast boost ────────────────────────────────────────
-      const imageData = ctx.getImageData(0, 0, outW, outH);
-      const d = imageData.data;
-      for (let i = 0; i < d.length; i += 4) {
-        // Weighted grayscale (human perception)
-        let gray = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
-        // S-curve contrast: push midtones toward B&W
-        gray = Math.min(255, Math.max(0, (gray - 128) * 1.4 + 128));
-        d[i] = d[i+1] = d[i+2] = gray;
+      if (CFG.bw) {
+        const id = ctx.getImageData(0,0,ow,oh), d = id.data;
+        for (let i=0;i<d.length;i+=4) {
+          let g = .299*d[i] + .587*d[i+1] + .114*d[i+2];
+          if (CFG.contrast) g = Math.min(255, Math.max(0, (g-128)*1.4+128));
+          d[i]=d[i+1]=d[i+2]=g;
+        }
+        ctx.putImageData(id,0,0);
       }
-      ctx.putImageData(imageData, 0, 0);
-
-      // Export as JPEG at 85% quality (good for fax, smaller file)
-      canvas.toBlob(blob => resolve(blob), 'image/jpeg', 0.85);
+      canvas.toBlob(b => resolve(b), 'image/jpeg', parseFloat(CFG.quality));
     };
-    img.onerror = () => resolve(file); // fallback: use original
+    img.onerror = () => resolve(file);
     img.src = url;
   });
 }
 
-// ── Add pages ─────────────────────────────────────────────────────────────────
+// ── Pages state ───────────────────────────────────────────────────────────────
+let pages = [], ocrCache = {}, currentStep = 1, pollTimer = null;
+
 async function addFiles(files) {
   const banner = document.getElementById('proc-banner');
   const msg    = document.getElementById('proc-msg');
   banner.classList.add('show');
-
   for (const file of Array.from(files)) {
-    if (file.size > 20 * 1024 * 1024) { alert(`${file.name} too large (max 20 MB)`); continue; }
+    if (file.size > 20*1024*1024) { alert(`${file.name} too large`); continue; }
     const idx = pages.length;
-    // Add placeholder
-    pages.push({ blob: null, url: URL.createObjectURL(file), ocr: null, processing: true });
+    pages.push({ blob:null, url:URL.createObjectURL(file), processing:true });
     renderGrid();
-
-    msg.textContent = `Processing page ${idx + 1}…`;
-    const processed = await processImage(file);
-    const url = URL.createObjectURL(processed);
+    msg.textContent = `Processing page ${idx+1}…`;
+    const blob = await processImage(file);
     URL.revokeObjectURL(pages[idx].url);
-    pages[idx] = { blob: processed, url, ocr: null, processing: false };
+    pages[idx] = { blob, url:URL.createObjectURL(blob), processing:false };
     renderGrid();
   }
-
   banner.classList.remove('show');
 }
 
 document.getElementById('camera-input').addEventListener('change', e => { addFiles(e.target.files); e.target.value=''; });
 document.getElementById('file-input').addEventListener('change',  e => { addFiles(e.target.files); e.target.value=''; });
 
-// ── Grid render ───────────────────────────────────────────────────────────────
 function renderGrid() {
   const grid  = document.getElementById('page-grid');
   const none  = document.getElementById('no-pages');
   const count = document.getElementById('page-count');
-  const ready = pages.filter(p => !p.processing);
-
+  const ready = pages.filter(p=>!p.processing).length;
   grid.innerHTML = '';
-  none.style.display  = pages.length === 0 ? 'block' : 'none';
-  count.style.display = pages.length === 0 ? 'none' : 'flex';
-  document.getElementById('pg-num').textContent   = ready.length;
-  document.getElementById('pg-badge').textContent = ready.length + (ready.length === 1 ? ' page' : ' pages');
-  document.getElementById('btn-next1').disabled   = ready.length === 0;
-
-  pages.forEach((pg, i) => {
-    const thumb = document.createElement('div');
-    thumb.className = 'page-thumb';
-
-    const img = document.createElement('img');
-    img.src = pg.url;
-    img.alt = `Page ${i+1}`;
-
-    const num = document.createElement('span');
-    num.className = 'pg-num';
-    num.textContent = `P${i+1}`;
-
-    thumb.appendChild(img);
-    thumb.appendChild(num);
-
+  none.style.display  = pages.length===0 ? 'block' : 'none';
+  count.style.display = pages.length===0 ? 'none' : 'flex';
+  document.getElementById('pg-num').textContent   = ready;
+  document.getElementById('pg-badge').textContent = ready + (ready===1?' page':' pages');
+  document.getElementById('btn-next1').disabled   = ready===0;
+  pages.forEach((pg,i) => {
+    const t = document.createElement('div'); t.className='page-thumb';
+    const img = document.createElement('img'); img.src=pg.url; img.alt=`P${i+1}`;
+    const num = document.createElement('span'); num.className='pg-num'; num.textContent=`P${i+1}`;
+    t.appendChild(img); t.appendChild(num);
     if (pg.processing) {
-      const ov = document.createElement('div');
-      ov.className = 'pg-processing';
-      ov.innerHTML = '<div class="spinner"></div><span>Processing…</span>';
-      thumb.appendChild(ov);
+      const ov=document.createElement('div'); ov.className='pg-processing';
+      ov.innerHTML='<div class="spinner"></div><span>Processing…</span>'; t.appendChild(ov);
     } else {
-      const del = document.createElement('button');
-      del.className = 'pg-del';
-      del.innerHTML = '×';
-      del.onclick = (e) => { e.stopPropagation(); deletePage(i); };
-      thumb.appendChild(del);
+      const del=document.createElement('button'); del.className='pg-del'; del.innerHTML='×';
+      del.onclick=e=>{e.stopPropagation();deletePage(i);}; t.appendChild(del);
     }
-
-    grid.appendChild(thumb);
+    grid.appendChild(t);
   });
-
-  // Add more tile
-  if (pages.length > 0 && !pages.some(p => p.processing)) {
-    const tile = document.createElement('label');
-    tile.className = 'add-tile';
-    tile.innerHTML = `<span class="big">＋</span><span>Add page</span><input type="file" accept="image/*" capture="environment">`;
-    tile.querySelector('input').addEventListener('change', e => { addFiles(e.target.files); e.target.value=''; });
+  if (pages.length>0 && !pages.some(p=>p.processing)) {
+    const tile=document.createElement('label'); tile.className='add-tile';
+    tile.innerHTML='<span class="big">＋</span><span>Add page</span><input type="file" accept="image/*" capture="environment">';
+    tile.querySelector('input').addEventListener('change',e=>{addFiles(e.target.files);e.target.value='';});
     grid.appendChild(tile);
   }
 }
 
 function deletePage(i) {
-  URL.revokeObjectURL(pages[i].url);
-  pages.splice(i, 1);
-  const newCache = {};
-  Object.entries(ocrCache).forEach(([k,v]) => {
-    const n = +k;
-    if (n < i) newCache[n] = v;
-    else if (n > i) newCache[n-1] = v;
-  });
-  ocrCache = newCache;
-  renderGrid();
+  URL.revokeObjectURL(pages[i].url); pages.splice(i,1);
+  const nc={};
+  Object.entries(ocrCache).forEach(([k,v])=>{ const n=+k; if(n<i) nc[n]=v; else if(n>i) nc[n-1]=v; });
+  ocrCache=nc; renderGrid();
 }
 
-// ── Thumb strip (step 2) ──────────────────────────────────────────────────────
+// ── Step 2 ────────────────────────────────────────────────────────────────────
 function buildThumbStrip() {
-  const strip = document.getElementById('thumb-strip');
-  strip.innerHTML = '';
-  pages.forEach((pg, i) => {
-    const img = document.createElement('img');
-    img.src = pg.url;
-    img.alt = `Page ${i+1}`;
-    img.onclick = () => selectPage(i);
-    strip.appendChild(img);
-  });
+  const strip=document.getElementById('thumb-strip'); strip.innerHTML='';
+  pages.forEach((pg,i)=>{ const img=document.createElement('img'); img.src=pg.url; img.onclick=()=>selectPage(i); strip.appendChild(img); });
   selectPage(0);
 }
-
 function selectPage(i) {
-  document.querySelectorAll('.thumb-strip img').forEach((img, idx) => img.classList.toggle('active', idx === i));
-  document.getElementById('ocr-page-label').textContent = i + 1;
-
-  if (ocrCache[i] !== undefined) {
-    document.getElementById('ocr-text').value = ocrCache[i];
-    return;
-  }
-
-  const status = document.getElementById('ocr-status');
-  const msg    = document.getElementById('ocr-msg');
-  const ta     = document.getElementById('ocr-text');
-  ta.value = '';
-  status.classList.add('show');
-  msg.textContent = 'Reading text…';
-
-  if (!pages[i] || pages[i].blob?.type === 'application/pdf') {
-    ocrCache[i] = '(PDF — text not extracted in browser)';
-    ta.value = ocrCache[i];
-    status.classList.remove('show');
-    return;
-  }
-
-  Tesseract.createWorker('eng', 1, {
-    logger: m => { if (m.status === 'recognizing text') msg.textContent = `OCR ${Math.round(m.progress*100)}%…`; }
-  }).then(worker => {
-    worker.recognize(pages[i].blob).then(({ data: { text } }) => {
-      worker.terminate();
-      ocrCache[i] = text.trim() || '(No text detected — check image quality)';
-      if (+document.getElementById('ocr-page-label').textContent === i + 1)
-        ta.value = ocrCache[i];
-      msg.textContent = '✓ Done';
-      setTimeout(() => status.classList.remove('show'), 1500);
-    });
-  }).catch(() => {
-    ocrCache[i] = '(OCR failed)';
-    ta.value = ocrCache[i];
-    status.classList.remove('show');
-  });
+  document.querySelectorAll('.thumb-strip img').forEach((img,idx)=>img.classList.toggle('active',idx===i));
+  document.getElementById('ocr-page-label').textContent=i+1;
+  if (ocrCache[i]!==undefined) { document.getElementById('ocr-text').value=ocrCache[i]; return; }
+  const status=document.getElementById('ocr-status'), msg=document.getElementById('ocr-msg'), ta=document.getElementById('ocr-text');
+  ta.value=''; status.classList.add('show'); msg.textContent='Reading text…';
+  if (!pages[i]||pages[i].blob?.type==='application/pdf') { ocrCache[i]='(PDF)'; ta.value=ocrCache[i]; status.classList.remove('show'); return; }
+  Tesseract.createWorker('eng',1,{ logger:m=>{ if(m.status==='recognizing text') msg.textContent=`OCR ${Math.round(m.progress*100)}%…`; }})
+    .then(w=>{ w.recognize(pages[i].blob).then(({data:{text}})=>{ w.terminate(); ocrCache[i]=text.trim()||'(No text detected)';
+      if(+document.getElementById('ocr-page-label').textContent===i+1) ta.value=ocrCache[i];
+      msg.textContent='✓ Done'; setTimeout(()=>status.classList.remove('show'),1500); }); })
+    .catch(()=>{ ocrCache[i]='(OCR failed)'; ta.value=ocrCache[i]; status.classList.remove('show'); });
 }
 
-// ── Fax helpers ───────────────────────────────────────────────────────────────
+// ── Step 3/4 ──────────────────────────────────────────────────────────────────
 function getFaxNumber() {
-  const v = document.getElementById('fax-select').value;
-  return v === 'custom' ? document.getElementById('custom-number').value : v;
+  const v=document.getElementById('fax-select').value;
+  return v==='custom'?document.getElementById('custom-number').value:v;
 }
-function syncCustom() {
-  document.getElementById('custom-wrap').style.display =
-    document.getElementById('fax-select').value === 'custom' ? 'block' : 'none';
-}
-function fmtFax(n) {
-  const d = n.replace(/\D/g,'');
-  return d.length === 11 ? `+${d[0]} (${d.slice(1,4)}) ${d.slice(4,7)}-${d.slice(7)}` : '+' + d;
-}
+function syncCustom() { document.getElementById('custom-wrap').style.display=document.getElementById('fax-select').value==='custom'?'block':'none'; }
+function fmtFax(n) { const d=n.replace(/\D/g,''); return d.length===11?`+${d[0]} (${d.slice(1,4)}) ${d.slice(4,7)}-${d.slice(7)}`:'+'+d; }
 
-// ── Summary ───────────────────────────────────────────────────────────────────
 function buildSummary() {
-  document.getElementById('sum-pages').textContent  = `${pages.length} page${pages.length>1?'s':''} (B&W, fax-optimized)`;
+  document.getElementById('sum-pages').textContent  = `${pages.length} page${pages.length>1?'s':''} (B&W optimized)`;
   document.getElementById('sum-to').textContent     = fmtFax(getFaxNumber());
-  document.getElementById('sum-cover').textContent  = document.getElementById('cover-text').value.trim() || '(none)';
-  document.getElementById('sum-cost').textContent   = `~$${(pages.length*0.07).toFixed(2)} (${pages.length} × $0.07/page)`;
-  if (document.getElementById('sum-balance').textContent === '—') checkBalance();
+  document.getElementById('sum-cover').textContent  = document.getElementById('cover-text').value.trim()||'(none)';
+  document.getElementById('sum-cost').textContent   = `~$${(pages.length*.07).toFixed(2)} (${pages.length} × $0.07)`;
+  document.getElementById('sum-proxy').textContent  = CFG.proxy || '⚠️ None set — may fail';
+  document.getElementById('no-proxy-warn').style.display = CFG.proxy ? 'none' : 'block';
+  checkBalance();
 }
 
-// ── Send + poll for delivery ──────────────────────────────────────────────────
+// ── Send + poll ───────────────────────────────────────────────────────────────
 async function sendFax() {
-  const btn = document.getElementById('btn-send');
-  const out = document.getElementById('result-area');
-  btn.disabled = true;
-  btn.textContent = `📡 Sending ${pages.length} page${pages.length>1?'s':''}…`;
-  out.innerHTML = '';
-
-  let digits = getFaxNumber().replace(/\D/g,'');
-  if (digits.length === 10) digits = '1' + digits;
-
+  const btn=document.getElementById('btn-send'), out=document.getElementById('result-area');
+  btn.disabled=true; btn.textContent=`📡 Sending ${pages.length} page${pages.length>1?'s':''}…`; out.innerHTML='';
+  let digits=getFaxNumber().replace(/\D/g,''); if(digits.length===10) digits='1'+digits;
   try {
-    const fd = new FormData();
-    fd.append('to[0]', '+' + digits);
-    pages.forEach((pg, i) => fd.append(`file[${i}]`, pg.blob, `page_${i+1}.jpg`));
-    const cover = document.getElementById('cover-text').value.trim();
-    if (cover) fd.append('cover_page_text', cover);
-
-    const resp = await fetch('https://api.phaxio.com/v2.1/faxes', {
-      method: 'POST', headers: { 'Authorization': AUTH }, body: fd
-    });
-    const data = await resp.json();
-    if (!data.success) throw new Error(data.message || 'API error');
-
-    const faxId = data.data?.id;
-    document.getElementById('send-btns').style.display = 'none';
-    showDeliveryTracker(faxId, digits);
-    startPolling(faxId);
-
-  } catch (err) {
-    let msg = String(err.message);
-    let hint = '';
-    if (msg.toLowerCase().includes('cors') || msg.toLowerCase().includes('failed to fetch') || msg.toLowerCase().includes('networkerror')) {
-      hint = `<br><br><strong>CORS issue:</strong> Phaxio blocks direct browser calls. A free Cloudflare Worker proxy is needed. Check the README or contact support.`;
-    }
-    out.innerHTML = `<div class="result-card error"><h3>❌ Send Failed</h3><p>${msg.replace(/</g,'&lt;')}${hint}</p></div>`;
-    btn.disabled = false;
-    btn.textContent = '📠 Retry';
+    const fd=new FormData();
+    fd.append('to[0]','+'+digits);
+    pages.forEach((pg,i)=>fd.append(`file[${i}]`,pg.blob,`page_${i+1}.jpg`));
+    const cover=document.getElementById('cover-text').value.trim();
+    if(cover) fd.append('cover_page_text',cover);
+    const resp=await fetch(getEndpoint(),{method:'POST',headers:{'Authorization':getAuth()},body:fd});
+    const data=await resp.json();
+    if(!data.success) throw new Error(data.message||'API error');
+    const faxId=data.data?.id;
+    document.getElementById('send-btns').style.display='none';
+    showDeliveryTracker(faxId,digits); startPolling(faxId);
+  } catch(err) {
+    let m=String(err.message);
+    const isCors=m.toLowerCase().includes('failed to fetch')||m.toLowerCase().includes('networkerror');
+    out.innerHTML=`<div class="result-card error"><h3>❌ ${isCors?'CORS Blocked':'Send Failed'}</h3>
+      <p>${isCors?'The browser was blocked from reaching the API. <a href="#" onclick="openSettings();return false" style="color:var(--accent)">Add a Cloudflare Worker URL in Settings →</a>':m.replace(/</g,'&lt;')}</p></div>`;
+    btn.disabled=false; btn.textContent='📠 Retry';
   }
 }
 
-function showDeliveryTracker(faxId, digits) {
-  const out = document.getElementById('result-area');
-  out.innerHTML = `
+function showDeliveryTracker(faxId,digits) {
+  document.getElementById('result-area').innerHTML=`
     <div class="result-card pending" id="tracker-card">
       <h3>📡 Fax Queued</h3>
-      <p>Fax ID: <span class="fax-id">${faxId}</span></p>
-      <p>Sending to +${digits} — checking delivery every 15 seconds…</p>
+      <p>ID: <span class="fax-id">${faxId}</span></p>
+      <p>Sending to +${digits} — polling every 15 sec…</p>
       <div class="delivery-track">
-        <div class="delivery-step done"  id="ds-queued"><div class="dot"></div><span class="dlabel">✓ Queued by Sinch</span></div>
-        <div class="delivery-step active" id="ds-sending"><div class="dot"></div><span class="dlabel">Dialing recipient…</span></div>
-        <div class="delivery-step"        id="ds-done"   ><div class="dot"></div><span class="dlabel">Delivered</span></div>
+        <div class="delivery-step done"   id="ds-q"><div class="dot"></div><span class="dlabel">✓ Queued by Sinch</span></div>
+        <div class="delivery-step active" id="ds-s"><div class="dot"></div><span class="dlabel">Dialing…</span></div>
+        <div class="delivery-step"        id="ds-d"><div class="dot"></div><span class="dlabel">Delivered</span></div>
       </div>
     </div>`;
 }
-
 function startPolling(faxId) {
-  let attempts = 0;
-  const max = 20; // 20 × 15s = 5 min
-
-  pollTimer = setInterval(async () => {
-    attempts++;
-    if (attempts > max) {
-      clearInterval(pollTimer);
-      updateTracker('timeout');
-      return;
-    }
-    try {
-      const r = await fetch(`https://api.phaxio.com/v2.1/faxes/${faxId}`, {
-        headers: { 'Authorization': AUTH }
-      });
-      const d = await r.json();
-      if (!d.success) return;
-      const status = d.data?.status;
-      if (status === 'success') { clearInterval(pollTimer); updateTracker('success', d.data); }
-      else if (status === 'failed') { clearInterval(pollTimer); updateTracker('failed', d.data); }
-      // 'queued' or 'sending' → keep polling
-    } catch { /* CORS may block polling too — silently retry */ }
-  }, 15000);
+  let n=0;
+  pollTimer=setInterval(async()=>{
+    if(++n>20){clearInterval(pollTimer);const c=document.getElementById('tracker-card');if(c)c.querySelector('p:last-of-type').textContent='Still in progress — check your Sinch dashboard.';return;}
+    try{
+      const r=await fetch((CFG.proxy?CFG.proxy.replace(/\/$/,''):'https://api.phaxio.com')+`/v2.1/faxes/${faxId}`,{headers:{'Authorization':getAuth()}});
+      const d=await r.json(); if(!d.success) return;
+      const st=d.data?.status;
+      if(st==='success'){clearInterval(pollTimer);updateTracker('success',d.data);}
+      else if(st==='failed'){clearInterval(pollTimer);updateTracker('failed',d.data);}
+    }catch{}
+  },15000);
 }
-
-function updateTracker(result, data) {
-  const card = document.getElementById('tracker-card');
-  if (!card) return;
-  const ds = document.getElementById('ds-sending');
-  const dd = document.getElementById('ds-done');
-
-  if (result === 'success') {
-    card.className = 'result-card success';
-    card.querySelector('h3').textContent = '✅ Fax Delivered!';
-    card.querySelector('p').textContent  = `Confirmed delivered to recipient.`;
-    ds.className = 'delivery-step done';
-    ds.querySelector('.dlabel').textContent = '✓ Connected to recipient';
-    dd.className = 'delivery-step done';
-    dd.querySelector('.dlabel').textContent = '✓ Delivered successfully';
-  } else if (result === 'failed') {
-    card.className = 'result-card error';
-    card.querySelector('h3').textContent = '❌ Fax Failed';
-    const reason = data?.recipients?.[0]?.error_type || 'Unknown error';
-    card.querySelector('p').textContent  = `Delivery failed: ${reason}. Try resending.`;
-    ds.className = 'delivery-step failed';
-    dd.className = 'delivery-step failed';
-    dd.querySelector('.dlabel').textContent = 'Failed — check number and retry';
-    document.getElementById('send-btns').style.display = 'flex';
-    document.getElementById('btn-send').disabled = false;
-    document.getElementById('btn-send').textContent = '📠 Retry';
-  } else if (result === 'timeout') {
-    card.querySelector('p').textContent = 'Still sending — check your Sinch dashboard for final status.';
-    ds.querySelector('.dot').style.animation = 'none';
+function updateTracker(result,data) {
+  const card=document.getElementById('tracker-card'); if(!card) return;
+  const ds=document.getElementById('ds-s'), dd=document.getElementById('ds-d');
+  if(result==='success'){
+    card.className='result-card success'; card.querySelector('h3').textContent='✅ Fax Delivered!';
+    ds.className='delivery-step done'; ds.querySelector('.dlabel').textContent='✓ Connected';
+    dd.className='delivery-step done'; dd.querySelector('.dlabel').textContent='✓ Delivered';
+  } else if(result==='failed'){
+    card.className='result-card error'; card.querySelector('h3').textContent='❌ Delivery Failed';
+    const reason=data?.recipients?.[0]?.error_type||'Unknown';
+    card.querySelector('p:last-of-type').textContent=`Failed: ${reason}. Check number and retry.`;
+    ds.className='delivery-step failed'; dd.className='delivery-step failed';
+    document.getElementById('send-btns').style.display='flex';
+    document.getElementById('btn-send').disabled=false; document.getElementById('btn-send').textContent='📠 Retry';
   }
 }
 
-// ── Nav ───────────────────────────────────────────────────────────────────────
+// ── Navigation ────────────────────────────────────────────────────────────────
 function goStep(n) {
-  if (n >= 2 && pages.filter(p => !p.processing).length === 0) return alert('Add at least one page first.');
-  if (n === 4) {
-    const to = getFaxNumber().replace(/\D/g,'');
-    if (to.length < 10) return alert('Select a valid fax number.');
-    buildSummary();
-  }
-  if (n === 2) buildThumbStrip();
-
-  currentStep = n;
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('step' + n).classList.add('active');
-  document.querySelectorAll('.step-pill').forEach(p => {
-    const s = +p.dataset.step;
-    p.classList.toggle('active', s === n);
-    p.classList.toggle('done', s < n);
-    p.querySelector('.num').textContent = s < n ? '✓' : s;
-  });
-  window.scrollTo({top:0, behavior:'smooth'});
+  if(n>=2&&pages.filter(p=>!p.processing).length===0) return alert('Add at least one page first.');
+  if(n===4){const to=getFaxNumber().replace(/\D/g,'');if(to.length<10) return alert('Select a valid fax number.');buildSummary();}
+  if(n===2) buildThumbStrip();
+  currentStep=n;
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('step'+n).classList.add('active');
+  document.querySelectorAll('.step-pill').forEach(p=>{const s=+p.dataset.step;p.classList.toggle('active',s===n);p.classList.toggle('done',s<n);p.querySelector('.num').textContent=s<n?'✓':s;});
+  window.scrollTo({top:0,behavior:'smooth'});
 }
+document.getElementById('btn-next1').addEventListener('click',()=>goStep(2));
 
-let currentStep = 1;
-document.getElementById('btn-next1').addEventListener('click', () => goStep(2));
+// Apply default cover note if set
+window.addEventListener('load', () => {
+  if (CFG.coverDef && !document.getElementById('cover-text').value) {
+    document.getElementById('cover-text').value = CFG.coverDef;
+  }
+});
 </script>
 </body>
 </html>
