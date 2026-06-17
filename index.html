@@ -132,8 +132,11 @@ textarea{min-height:90px;}
 
 /* ── Thumb strip ── */
 .thumb-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;}
-.thumb-strip img{height:62px;width:46px;object-fit:cover;border-radius:6px;border:2px solid transparent;cursor:pointer;flex-shrink:0;}
+.thumb-container{position:relative;flex-shrink:0;}
+.thumb-strip img{height:62px;width:46px;object-fit:cover;border-radius:6px;border:2px solid transparent;cursor:pointer;display:block;}
 .thumb-strip img.active{border-color:var(--accent);}
+.thumb-dl{position:absolute;top:2px;right:2px;background:var(--accent);color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;opacity:0;transition:opacity .2s;z-index:10;}
+.thumb-container:hover .thumb-dl{opacity:1;}
 #ocr-status{display:none;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);font-size:13px;}
 #ocr-status.show{display:flex;}
 
@@ -267,6 +270,17 @@ footer{padding:12px 16px;text-align:center;font-size:11px;color:var(--muted);bor
           <option value="0.70">70% — Smaller file</option>
           <option value="0.55">55% — Minimum</option>
         </select>
+      </div>
+      <div class="s-toggle-row">
+        <div>
+          <div class="s-label">Auto-save images</div>
+          <div class="s-sub">Auto-download processed pages to your device</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="s-autosave">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
       </div>
     </div>
 
@@ -443,6 +457,7 @@ const DEFAULTS = {
   rotate:    true,
   contrast:  true,
   quality:   "0.85",
+  autosave:  false,
   sender:    "",
   coverDef:  "",
 };
@@ -477,6 +492,7 @@ function openSettings() {
   document.getElementById('s-rotate').checked     = CFG.rotate;
   document.getElementById('s-contrast').checked   = CFG.contrast;
   document.getElementById('s-quality').value      = CFG.quality;
+  document.getElementById('s-autosave').checked   = CFG.autosave;
   document.getElementById('s-sender').value       = CFG.sender;
   document.getElementById('s-cover-default').value = CFG.coverDef;
   document.getElementById('drawer').classList.add('open');
@@ -498,6 +514,7 @@ function saveSettings() {
     rotate:   document.getElementById('s-rotate').checked,
     contrast: document.getElementById('s-contrast').checked,
     quality:  document.getElementById('s-quality').value,
+    autosave: document.getElementById('s-autosave').checked,
     sender:   document.getElementById('s-sender').value.trim(),
     coverDef: document.getElementById('s-cover-default').value.trim(),
   };
@@ -635,6 +652,19 @@ async function processImage(file) {
   });
 }
 
+// ── Download helper ──────────────────────────────────────────────────────────
+function downloadPage(blob, pageNum) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const now = new Date().toISOString().slice(0,10).replace(/-/g,'');
+  a.href = url;
+  a.download = `fax_page_${now}_${pageNum}.jpg`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 // ── Pages state ───────────────────────────────────────────────────────────────
 let pages = [], ocrCache = {}, currentStep = 1, pollTimer = null;
 
@@ -651,6 +681,7 @@ async function addFiles(files) {
     const blob = await processImage(file);
     URL.revokeObjectURL(pages[idx].url);
     pages[idx] = { blob, url:URL.createObjectURL(blob), processing:false };
+    if (CFG.autosave) downloadPage(blob, idx+1);
     renderGrid();
   }
   banner.classList.remove('show');
@@ -702,7 +733,13 @@ function deletePage(i) {
 // ── Step 2 ────────────────────────────────────────────────────────────────────
 function buildThumbStrip() {
   const strip=document.getElementById('thumb-strip'); strip.innerHTML='';
-  pages.forEach((pg,i)=>{ const img=document.createElement('img'); img.src=pg.url; img.onclick=()=>selectPage(i); strip.appendChild(img); });
+  pages.forEach((pg,i)=>{
+    const cont=document.createElement('div'); cont.className='thumb-container';
+    const img=document.createElement('img'); img.src=pg.url; img.onclick=()=>selectPage(i);
+    const dl=document.createElement('button'); dl.className='thumb-dl'; dl.innerHTML='⬇'; dl.title='Download';
+    dl.onclick=e=>{e.stopPropagation();downloadPage(pg.blob,i+1);};
+    cont.appendChild(img); cont.appendChild(dl); strip.appendChild(cont);
+  });
   selectPage(0);
 }
 function selectPage(i) {
