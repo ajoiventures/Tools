@@ -3,40 +3,40 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>IRS Fax Sender</title>
+<title>RetroFax</title>
 <style>
 :root{
-  --bg:#0f0f13;--surface:#1a1a22;--surface2:#22222e;--border:#2e2e3e;
-  --accent:#6c63ff;--accent2:#4ade80;--danger:#f87171;--warn:#fbbf24;
-  --text:#e8e8f0;--muted:#8888a8;--radius:14px;
+  --bg:#11110d;--surface:#1b1a14;--surface2:#262319;--paper:#d7c89b;--paper2:#b8a979;--border:#5a4f34;
+  --accent:#f2b43d;--accent2:#95d45a;--danger:#f87171;--warn:#fbbf24;
+  --text:#f3dfaa;--muted:#a99a72;--ink:#15130d;--radius:6px;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100dvh;display:flex;flex-direction:column;overflow-x:hidden;}
+body{background:radial-gradient(circle at 50% -20%,#292315 0,#11110d 48%,#070705 100%);color:var(--text);font-family:'Courier New',ui-monospace,monospace;min-height:100dvh;display:flex;flex-direction:column;overflow-x:hidden;}
 
 /* ── Header ── */
-header{padding:14px 16px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;}
-header h1{font-size:17px;font-weight:700;}
-header p{font-size:11px;color:var(--muted);margin-top:1px;}
-.balance-chip{font-size:11px;font-weight:700;padding:4px 10px;border-radius:99px;background:var(--surface2);border:1px solid var(--border);white-space:nowrap;cursor:pointer;}
-.balance-chip.ok{color:var(--accent2);border-color:rgba(74,222,128,.3);}
-.balance-chip.low{color:var(--warn);border-color:rgba(251,191,36,.3);}
-.balance-chip.empty{color:var(--danger);border-color:rgba(248,113,113,.3);}
+header{padding:16px;border-bottom:2px solid #090805;display:flex;align-items:center;gap:12px;flex-shrink:0;background:linear-gradient(180deg,#222017,#15140f);box-shadow:inset 0 -1px #75653d;}
+header h1{font-size:25px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--accent);text-shadow:0 0 10px rgba(242,180,61,.35);}
+header p{font-size:11px;color:var(--muted);margin-top:1px;text-transform:uppercase;letter-spacing:1px;}
+.balance-chip{font-size:11px;font-weight:800;padding:5px 10px;border-radius:4px;background:#11150c;border:2px solid #384a23;white-space:nowrap;cursor:pointer;text-transform:uppercase;}
+.balance-chip.ok{color:var(--accent2);border-color:#456d2d;box-shadow:0 0 10px rgba(149,212,90,.18);}
+.balance-chip.low{color:var(--warn);border-color:#7c5f23;}
+.balance-chip.empty{color:var(--danger);border-color:rgba(248,113,113,.45);}
 .header-right{display:flex;align-items:center;gap:8px;margin-left:auto;}
-.settings-btn{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px;display:flex;align-items:center;transition:color .2s;}
+.settings-btn{background:var(--surface2);border:2px solid var(--border);border-radius:6px;color:var(--text);cursor:pointer;padding:7px;display:flex;align-items:center;transition:color .2s,background .2s;}
 .settings-btn:hover{color:var(--text);}
 
 /* ── Steps ── */
-.steps{display:flex;padding:10px 16px;gap:6px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border);flex-shrink:0;}
-.step-pill{display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:99px;font-size:12px;font-weight:600;white-space:nowrap;background:var(--surface2);color:var(--muted);}
-.step-pill.active{background:var(--accent);color:#fff;}
-.step-pill.done{color:var(--accent2);}
-.step-pill .num{width:17px;height:17px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:10px;}
+.steps{display:flex;padding:10px 16px;gap:4px;overflow-x:auto;scrollbar-width:none;border-bottom:2px solid #090805;flex-shrink:0;background:#11110d;}
+.step-pill{display:flex;align-items:center;gap:7px;padding:8px 12px;border-radius:4px;font-size:12px;font-weight:800;white-space:nowrap;background:#1d1c15;color:var(--muted);border:1px solid #443b27;text-transform:uppercase;}
+.step-pill.active{background:linear-gradient(180deg,#ffc84d,#d8901e);color:var(--ink);border-color:#ffd56b;}
+.step-pill.done{color:var(--accent2);border-color:#4d6f30;}
+.step-pill .num{width:18px;height:18px;border-radius:3px;background:rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;font-size:11px;}
 
 /* ── Main ── */
-main{flex:1;padding:18px 16px;max-width:540px;width:100%;margin:0 auto;}
+main{flex:1;padding:18px 16px;max-width:560px;width:100%;margin:0 auto;background:linear-gradient(180deg,rgba(215,200,155,.08),rgba(0,0,0,0));}
 .panel{display:none;flex-direction:column;gap:14px;}
 .panel.active{display:flex;}
-h2{font-size:16px;font-weight:700;}
+h2{font-size:18px;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:var(--accent);}
 p.sub{font-size:13px;color:var(--muted);line-height:1.5;}
 
 /* ── Settings drawer ── */
@@ -85,50 +85,53 @@ p.sub{font-size:13px;color:var(--muted);line-height:1.5;}
 
 /* ── Grid ── */
 .cam-row{display:flex;gap:10px;}
-.btn-camera{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:14px;font-weight:600;cursor:pointer;position:relative;}
+.btn-camera{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;border-radius:var(--radius);border:2px solid var(--border);background:linear-gradient(180deg,var(--paper),var(--paper2));color:var(--ink);font-size:14px;font-weight:900;cursor:pointer;position:relative;text-transform:uppercase;box-shadow:inset 0 1px rgba(255,255,255,.45),0 3px 0 #0a0906;}
 .btn-camera input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
 .page-count{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--muted);}
 .page-count strong{color:var(--text);}
-.badge{background:var(--accent);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;}
+.badge{background:var(--accent2);color:#11150c;font-size:11px;font-weight:900;padding:3px 8px;border-radius:4px;text-transform:uppercase;}
 .page-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
-.page-thumb{position:relative;border-radius:10px;overflow:hidden;background:var(--surface2);border:1px solid var(--border);aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;}
+.page-thumb{position:relative;border-radius:4px;overflow:hidden;background:var(--surface2);border:2px solid var(--border);aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;}
 .page-thumb img{width:100%;height:100%;object-fit:cover;}
 .page-thumb .pg-num{position:absolute;top:5px;left:5px;background:rgba(0,0,0,.7);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:99px;}
 .page-thumb .pg-del{position:absolute;top:5px;right:5px;background:rgba(248,113,113,.9);color:#fff;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-weight:700;}
 .page-thumb .pg-processing{position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:11px;color:#fff;}
-.add-tile{border-radius:10px;border:2px dashed var(--border);aspect-ratio:3/4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;color:var(--muted);font-size:11px;font-weight:600;position:relative;transition:border-color .2s;}
+.add-tile{border-radius:4px;border:2px dashed var(--border);aspect-ratio:3/4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;color:var(--muted);font-size:11px;font-weight:800;position:relative;transition:border-color .2s;text-transform:uppercase;}
 .add-tile:hover{border-color:var(--accent);color:var(--accent);}
 .add-tile input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
 .add-tile .big{font-size:26px;}
 
 /* ── Fields ── */
 .field-label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
-textarea,select,input[type=text]{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:inherit;padding:11px 13px;font-size:14px;resize:vertical;outline:none;transition:border-color .2s;}
+textarea,select,input[type=text]{width:100%;background:#11110d;border:2px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:inherit;padding:11px 13px;font-size:14px;resize:vertical;outline:none;transition:border-color .2s;}
 textarea:focus,select:focus,input[type=text]:focus{border-color:var(--accent);}
 select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238888a8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;cursor:pointer;}
 select option{background:var(--surface2);}
 textarea{min-height:90px;}
 
 /* ── Buttons ── */
-.btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 20px;border-radius:var(--radius);font-size:15px;font-weight:700;cursor:pointer;border:none;width:100%;transition:opacity .2s;}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 20px;border-radius:var(--radius);font-size:14px;font-weight:900;cursor:pointer;border:none;width:100%;transition:opacity .2s;text-transform:uppercase;letter-spacing:.5px;}
 .btn:disabled{opacity:.4;cursor:not-allowed;}
 .btn:active:not(:disabled){opacity:.82;}
-.btn-primary{background:var(--accent);color:#fff;}
-.btn-success{background:var(--accent2);color:#0f0f13;}
-.btn-ghost{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+.btn-primary{background:linear-gradient(180deg,#ffc84d,#d8901e);color:var(--ink);border:2px solid #ffd56b;box-shadow:0 3px 0 #6f4611;}
+.btn-success{background:linear-gradient(180deg,#a8eb6b,#6aa33d);color:#11150c;border:2px solid #c9ff8b;box-shadow:0 3px 0 #304d1d;}
+.btn-ghost{background:#1b1a14;color:var(--text);border:2px solid var(--border);}
 .btn-sm{padding:8px 14px;font-size:13px;border-radius:10px;}
 .btn-row{display:flex;gap:10px;}
 .btn-row .btn{flex:1;}
-.info-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:13px 15px;font-size:13px;color:var(--muted);line-height:1.6;}
+.info-box{background:#17160f;border:2px dashed var(--border);border-radius:var(--radius);padding:13px 15px;font-size:13px;color:var(--muted);line-height:1.6;}
 .info-box strong{color:var(--text);}
 .info-box a{color:var(--accent);text-decoration:none;}
+.workflow-note{background:#10130c;border:2px solid #4d6f30;border-radius:var(--radius);padding:14px 15px;display:flex;flex-direction:column;gap:5px;box-shadow:inset 0 0 18px rgba(149,212,90,.08);}
+.workflow-note h3{font-size:14px;font-weight:700;}
+.workflow-note p{font-size:13px;color:var(--muted);line-height:1.45;}
 
 /* ── Summary ── */
-.summary-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.summary-box{background:var(--paper);border:2px solid var(--border);border-radius:var(--radius);overflow:hidden;color:var(--ink);}
 .summary-row{display:flex;justify-content:space-between;font-size:13px;padding:10px 15px;border-bottom:1px solid var(--border);gap:12px;}
 .summary-row:last-child{border-bottom:none;}
-.summary-row .lbl{color:var(--muted);flex-shrink:0;}
-.summary-row .val{color:var(--text);font-weight:500;text-align:right;word-break:break-all;}
+.summary-row .lbl{color:#5a4f34;flex-shrink:0;font-weight:900;}
+.summary-row .val{color:var(--ink);font-weight:800;text-align:right;word-break:break-all;}
 
 /* ── Thumb strip ── */
 .thumb-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;}
@@ -137,6 +140,9 @@ textarea{min-height:90px;}
 .thumb-strip img.active{border-color:var(--accent);}
 .thumb-dl{position:absolute;top:2px;right:2px;background:var(--accent);color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;opacity:0;transition:opacity .2s;z-index:10;}
 .thumb-container:hover .thumb-dl{opacity:1;}
+.adjust-preview{background:#0e0e0a;border:2px solid var(--border);border-radius:var(--radius);min-height:280px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.adjust-preview img{max-width:100%;max-height:60vh;object-fit:contain;display:block;}
+.adjust-empty{color:var(--muted);font-size:13px;padding:24px;text-align:center;}
 #ocr-status{display:none;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);font-size:13px;}
 #ocr-status.show{display:flex;}
 
@@ -185,6 +191,9 @@ footer{padding:12px 16px;text-align:center;font-size:11px;color:var(--muted);bor
 .cam-adj-modes{display:flex;gap:8px;padding:10px 12px 4px;}
 .cam-mode-btn{flex:1;padding:8px 4px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);font-size:12px;font-weight:600;cursor:pointer;}
 .cam-mode-btn.active{background:#6c63ff;border-color:#6c63ff;color:#fff;}
+.cam-adj-tools{display:flex;gap:8px;padding:8px 12px 0;}
+.cam-tool-btn{flex:1;padding:9px 6px;border-radius:8px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:rgba(255,255,255,.78);font-size:12px;font-weight:700;cursor:pointer;}
+.cam-tool-btn:active,.cam-mode-btn:active{transform:scale(.98);}
 .cam-adj-actions{display:flex;gap:8px;padding:8px 12px 14px;}
 .cam-retake-btn{flex:1;padding:11px;border-radius:10px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:14px;font-weight:600;cursor:pointer;}
 .cam-use-btn{flex:2;padding:11px;border-radius:10px;background:#6c63ff;border:none;color:#fff;font-size:14px;font-weight:700;cursor:pointer;}
@@ -213,6 +222,10 @@ footer{padding:12px 16px;text-align:center;font-size:11px;color:var(--muted);bor
       <button class="cam-mode-btn active" id="mode-color" onclick="setMode('color')">Color</button>
       <button class="cam-mode-btn" id="mode-bw" onclick="setMode('bw')">B&amp;W</button>
       <button class="cam-mode-btn" id="mode-enhance" onclick="setMode('enhance')">Enhance</button>
+    </div>
+    <div class="cam-adj-tools">
+      <button class="cam-tool-btn" onclick="autoFitCameraCorners()">Auto fit</button>
+      <button class="cam-tool-btn" onclick="resetCameraCorners()">Full page</button>
     </div>
     <div class="cam-adj-actions">
       <button class="cam-retake-btn" onclick="camRetake()">↩ Retake</button>
@@ -372,8 +385,8 @@ footer{padding:12px 16px;text-align:center;font-size:11px;color:var(--muted);bor
     <circle cx="19" cy="11" r="1.2" fill="#fff"/>
   </svg>
   <div>
-    <h1>IRS Fax Sender</h1>
-    <p>Scan multiple pages &amp; fax in one shot</p>
+    <h1>RetroFax</h1>
+    <p>Scan, crop, and fax tax pages</p>
   </div>
   <div class="header-right">
     <div class="balance-chip" id="balance-chip" onclick="openSettings()" title="Tap to open settings">⏳</div>
@@ -387,9 +400,10 @@ footer{padding:12px 16px;text-align:center;font-size:11px;color:var(--muted);bor
 
 <div class="steps">
   <div class="step-pill active" data-step="1"><span class="num">1</span> Scan</div>
-  <div class="step-pill" data-step="2"><span class="num">2</span> Review</div>
-  <div class="step-pill" data-step="3"><span class="num">3</span> Details</div>
-  <div class="step-pill" data-step="4"><span class="num">4</span> Send</div>
+  <div class="step-pill" data-step="2"><span class="num">2</span> Adjust</div>
+  <div class="step-pill" data-step="3"><span class="num">3</span> Review</div>
+  <div class="step-pill" data-step="4"><span class="num">4</span> Details</div>
+  <div class="step-pill" data-step="5"><span class="num">5</span> Send</div>
 </div>
 
 <main>
@@ -413,6 +427,10 @@ footer{padding:12px 16px;text-align:center;font-size:11px;color:var(--muted);bor
       <div class="spinner"></div>
       <span id="proc-msg">Processing…</span>
     </div>
+        <section class="workflow-note" aria-label="Adjust crop">
+      <h3>Adjust crop before sending</h3>
+      <p>After you scan or upload pages, use the Adjust step to preview each cropped page before OCR review, details, and fax send.</p>
+    </section>
     <div class="page-count" id="page-count" style="display:none">
       <span>Pages ready: <strong id="pg-num">0</strong></span>
       <span class="badge" id="pg-badge">0 pages</span>
@@ -421,11 +439,25 @@ footer{padding:12px 16px;text-align:center;font-size:11px;color:var(--muted);bor
     <div id="no-pages" class="info-box" style="text-align:center;padding:22px 16px">
       📷 No pages yet — tap Camera or Upload
     </div>
-    <button class="btn btn-primary" id="btn-next1" disabled>Review Pages →</button>
+    <button class="btn btn-primary" id="btn-next1" disabled>Adjust Pages -></button>
   </div>
 
   <!-- STEP 2 -->
   <div class="panel" id="step2">
+    <h2>Adjust Pages</h2>
+    <p class="sub">Check each cropped page before OCR review and fax details.</p>
+    <div class="thumb-strip" id="adjust-strip"></div>
+    <div class="adjust-preview" id="adjust-preview">
+      <div class="adjust-empty">Select a page to preview</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goStep(1)">Back</button>
+      <button class="btn btn-primary" onclick="goStep(3)">Review Text -></button>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="panel" id="step3">
     <h2>Review Pages</h2>
     <p class="sub">Tap a thumbnail to check the image and verify it's readable.</p>
     <div class="thumb-strip" id="thumb-strip"></div>
@@ -436,13 +468,13 @@ footer{padding:12px 16px;text-align:center;font-size:11px;color:var(--muted);bor
     </div>
     <div class="info-box">💡 <strong>Tip:</strong> The processed B&amp;W image is faxed — this text is just a readability check.</div>
     <div class="btn-row">
-      <button class="btn btn-ghost" onclick="goStep(1)">← Back</button>
-      <button class="btn btn-primary" onclick="goStep(3)">Continue →</button>
+      <button class="btn btn-ghost" onclick="goStep(2)">Back</button>
+      <button class="btn btn-primary" onclick="goStep(4)">Continue -></button>
     </div>
   </div>
 
-  <!-- STEP 3 -->
-  <div class="panel" id="step3">
+  <!-- STEP 4 -->
+  <div class="panel" id="step4">
     <h2>Fax Details</h2>
     <div>
       <div class="field-label">IRS Fax Number</div>
@@ -466,13 +498,13 @@ footer{padding:12px 16px;text-align:center;font-size:11px;color:var(--muted);bor
     </div>
     <div class="info-box">⚠️ <strong>Verify IRS numbers at <a href="https://irs.gov" target="_blank">irs.gov</a></strong> — they change without notice.</div>
     <div class="btn-row">
-      <button class="btn btn-ghost" onclick="goStep(2)">← Back</button>
-      <button class="btn btn-primary" onclick="goStep(4)">Review &amp; Send →</button>
+      <button class="btn btn-ghost" onclick="goStep(3)">Back</button>
+      <button class="btn btn-primary" onclick="goStep(5)">Review &amp; Send -></button>
     </div>
   </div>
 
-  <!-- STEP 4 -->
-  <div class="panel" id="step4">
+  <!-- STEP 5 -->
+  <div class="panel" id="step5">
     <h2>Review &amp; Send</h2>
     <div class="summary-box">
       <div class="summary-row"><span class="lbl">Pages</span><span class="val" id="sum-pages">—</span></div>
@@ -487,14 +519,14 @@ footer{padding:12px 16px;text-align:center;font-size:11px;color:var(--muted);bor
     </div>
     <div id="result-area"></div>
     <div class="btn-row" id="send-btns">
-      <button class="btn btn-ghost" onclick="goStep(3)">← Back</button>
+      <button class="btn btn-ghost" onclick="goStep(4)">Back</button>
       <button class="btn btn-success" id="btn-send" onclick="sendFax()">📠 Send Fax</button>
     </div>
   </div>
 
 </main>
 
-<footer>Powered by Sinch Fax API &nbsp;·&nbsp; ajoiventures &nbsp;·&nbsp; <a href="#" onclick="openSettings();return false" style="color:var(--accent);text-decoration:none">Settings</a></footer>
+<footer>RetroFax &nbsp;·&nbsp; Powered by Sinch Fax API &nbsp;·&nbsp; <a href="#" onclick="openSettings();return false" style="color:var(--accent);text-decoration:none">Settings</a></footer>
 
 <canvas id="proc-canvas" style="display:none"></canvas>
 
@@ -935,6 +967,31 @@ function deletePage(i) {
 }
 
 // ── Step 2 ────────────────────────────────────────────────────────────────────
+function buildAdjustStrip() {
+  const strip=document.getElementById('adjust-strip');
+  strip.innerHTML='';
+  pages.forEach((pg,i)=>{
+    const cont=document.createElement('div'); cont.className='thumb-container';
+    const img=document.createElement('img'); img.src=pg.url; img.alt=`P${i+1}`; img.onclick=()=>selectAdjustPage(i);
+    const dl=document.createElement('button'); dl.className='thumb-dl'; dl.innerHTML='⬇'; dl.title='Download';
+    dl.onclick=e=>{e.stopPropagation();downloadPage(pg.blob,i+1);};
+    cont.appendChild(img); cont.appendChild(dl); strip.appendChild(cont);
+  });
+  selectAdjustPage(0);
+}
+
+function selectAdjustPage(i) {
+  document.querySelectorAll('#adjust-strip img').forEach((img,idx)=>img.classList.toggle('active',idx===i));
+  const preview=document.getElementById('adjust-preview');
+  const pg=pages[i];
+  if(!pg){ preview.innerHTML='<div class="adjust-empty">Select a page to preview</div>'; return; }
+  preview.innerHTML='';
+  const img=document.createElement('img');
+  img.src=pg.url;
+  img.alt=`Adjusted page ${i+1}`;
+  preview.appendChild(img);
+}
+
 function buildThumbStrip() {
   const strip=document.getElementById('thumb-strip'); strip.innerHTML='';
   pages.forEach((pg,i)=>{
@@ -1052,8 +1109,9 @@ function updateTracker(result,data) {
 // ── Navigation ────────────────────────────────────────────────────────────────
 function goStep(n) {
   if(n>=2&&pages.filter(p=>!p.processing).length===0) return alert('Add at least one page first.');
-  if(n===4){const to=getFaxNumber().replace(/\D/g,'');if(to.length<10) return alert('Select a valid fax number.');buildSummary();}
-  if(n===2) buildThumbStrip();
+  if(n===5){const to=getFaxNumber().replace(/\D/g,'');if(to.length<10) return alert('Select a valid fax number.');buildSummary();}
+  if(n===2) buildAdjustStrip();
+  if(n===3) buildThumbStrip();
   currentStep=n;
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('step'+n).classList.add('active');
@@ -1131,8 +1189,8 @@ function camCapture() {
   const W = camVideo.clientWidth, H = camVideo.clientHeight;
   camOverlay.width = W; camOverlay.height = H;
   camOverlay.style.display = 'block';
-  const pad = Math.round(Math.min(W,H) * .05);
-  camCorners = [[pad,pad],[W-pad,pad],[W-pad,H-pad],[pad,H-pad]];
+  setFullPageCorners();
+  autoFitCameraCorners(false);
   camMode='color'; setMode('color');
   camToolbar.style.display='none'; camAdjWrap.style.display='flex';
   document.getElementById('cam-status').textContent='Drag corners · pick mode · Add Page';
@@ -1159,6 +1217,57 @@ function setMode(m) {
 }
 
 // ── Overlay: draw corner quad on the transparent overlay canvas ───────────────
+function getCoverTransform(srcW, srcH, dstW, dstH) {
+  const srcAR=srcW/srcH, dstAR=dstW/dstH;
+  let scale, ox=0, oy=0;
+  if(srcAR>dstAR){ scale=dstH/srcH; ox=(srcW*scale-dstW)/2; }
+  else          { scale=dstW/srcW; oy=(srcH*scale-dstH)/2; }
+  return { scale, ox, oy };
+}
+
+function clampCamPoint([x,y]) {
+  return [
+    Math.max(0, Math.min(camOverlay.width, x)),
+    Math.max(0, Math.min(camOverlay.height, y))
+  ];
+}
+
+function fullToDisplayCorners(corners) {
+  const t = getCoverTransform(camSnap.width, camSnap.height, camOverlay.width, camOverlay.height);
+  return corners.map(([x,y]) => clampCamPoint([x*t.scale-t.ox, y*t.scale-t.oy]));
+}
+
+function displayToFullCorners(corners) {
+  const t = getCoverTransform(camSnap.width, camSnap.height, camOverlay.width, camOverlay.height);
+  return corners.map(([x,y]) => [(x+t.ox)/t.scale, (y+t.oy)/t.scale]);
+}
+
+function setFullPageCorners() {
+  const pad = Math.round(Math.min(camOverlay.width, camOverlay.height) * .045);
+  camCorners = [
+    [pad,pad],
+    [camOverlay.width-pad,pad],
+    [camOverlay.width-pad,camOverlay.height-pad],
+    [pad,camOverlay.height-pad]
+  ];
+}
+
+function resetCameraCorners() {
+  setFullPageCorners();
+  document.getElementById('cam-status').textContent='Full page selected. Drag any corner to fine tune.';
+}
+
+function autoFitCameraCorners(showMessage=true) {
+  if(!camSnap) return;
+  try {
+    camCorners = fullToDisplayCorners(detectDocumentCorners(camSnap));
+    if(showMessage) document.getElementById('cam-status').textContent='Auto fit applied. Drag any corner to fine tune.';
+  } catch {
+    setFullPageCorners();
+    if(showMessage) document.getElementById('cam-status').textContent='Auto fit failed. Full page selected.';
+  }
+}
+
 function drawOverlay() {
   if(!camCorners) return;
   const W=camOverlay.width, H=camOverlay.height;
@@ -1178,14 +1287,8 @@ function drawOverlay() {
 // ── Add page ──────────────────────────────────────────────────────────────────
 async function camUse() {
   if(!camSnap||!camCorners) return;
-  const vw=camSnap.width, vh=camSnap.height;
-  const dw=camOverlay.width, dh=camOverlay.height;
   // Map display corners → full-res coords (reverse the object-fit:cover transform)
-  const videoAR=vw/vh, dispAR=dw/dh;
-  let scale, ox=0, oy=0;
-  if(videoAR>dispAR){ scale=dh/vh; ox=(vw*scale-dw)/2; }
-  else              { scale=dw/vw; oy=(vh*scale-dh)/2; }
-  const fullCorners=camCorners.map(([x,y])=>[(x+ox)/scale,(y+oy)/scale]);
+  const fullCorners=displayToFullCorners(camCorners);
   const snapRef=camSnap;
   closeCamera();
   const banner=document.getElementById('proc-banner'), msg=document.getElementById('proc-msg');
@@ -1212,8 +1315,8 @@ async function camUse() {
 
 // ── Corner dragging ───────────────────────────────────────────────────────────
 function evtPos(e){
-  const r=camOverlay.getBoundingClientRect(), s=e.touches?e.touches[0]:e;
-  return [s.clientX-r.left, s.clientY-r.top];
+  const r=camOverlay.getBoundingClientRect();
+  return clampCamPoint([e.clientX-r.left, e.clientY-r.top]);
 }
 function nearestCorner(p){
   if(!camCorners) return -1;
@@ -1221,12 +1324,26 @@ function nearestCorner(p){
   camCorners.forEach(([cx,cy],i)=>{ const d=Math.hypot(p[0]-cx,p[1]-cy); if(d<bestD){bestD=d;best=i;} });
   return best;
 }
-camOverlay.addEventListener('touchstart',e=>{e.preventDefault();camDrag=nearestCorner(evtPos(e));},{passive:false});
-camOverlay.addEventListener('touchmove', e=>{e.preventDefault();if(camDrag>=0)camCorners[camDrag]=evtPos(e);},{passive:false});
-camOverlay.addEventListener('touchend',  ()=>{camDrag=-1;});
-camOverlay.addEventListener('mousedown', e=>{camDrag=nearestCorner(evtPos(e));});
-camOverlay.addEventListener('mousemove', e=>{if(camDrag>=0)camCorners[camDrag]=evtPos(e);});
-camOverlay.addEventListener('mouseup',   ()=>{camDrag=-1;});
+camOverlay.addEventListener('pointerdown', e=>{
+  e.preventDefault();
+  camDrag=nearestCorner(evtPos(e));
+  if(camDrag>=0) {
+    try { camOverlay.setPointerCapture(e.pointerId); } catch {}
+  }
+});
+camOverlay.addEventListener('pointermove', e=>{
+  if(camDrag<0) return;
+  e.preventDefault();
+  camCorners[camDrag]=evtPos(e);
+});
+function endCornerDrag(e){
+  try {
+    if(camDrag>=0 && camOverlay.hasPointerCapture?.(e.pointerId)) camOverlay.releasePointerCapture(e.pointerId);
+  } catch {}
+  camDrag=-1;
+}
+camOverlay.addEventListener('pointerup', endCornerDrag);
+camOverlay.addEventListener('pointercancel', endCornerDrag);
 </script>
 </body>
 </html>
