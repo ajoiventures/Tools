@@ -1,17 +1,18 @@
 /**
- * Fax Proxy — Cloudflare Worker
+ * Fax Proxy — Cloudflare Worker (Sinch Fax API)
+ *
+ * Proxies browser → fax.api.sinch.com to fix CORS.
  *
  * DEPLOY:
- * 1. dash.cloudflare.com → Workers & Pages → Create → Create Worker
- * 2. Delete ALL default code, paste this entire file
- * 3. Click "Save and Deploy"
- * 4. Copy the *.workers.dev URL → paste into Fax App Settings → Cloudflare Worker URL
+ * 1. dash.cloudflare.com → Workers & Pages → Create → Start with Hello World
+ * 2. Delete default code, paste this file, Save and Deploy
+ * 3. Copy *.workers.dev URL → paste into Fax App Settings → Cloudflare Worker URL
  *
- * TEST: open https://your-worker.workers.dev/ping in your browser
- *       you should see: {"ok":true,"message":"Fax proxy is alive"}
+ * TEST: https://your-worker.workers.dev/ping
+ *       should return: {"ok":true,"message":"Fax proxy is alive"}
  */
 
-const PHAXIO = "https://api.phaxio.com";
+const SINCH_FAX = "https://fax.api.sinch.com";
 
 const CORS = {
   "Access-Control-Allow-Origin":  "*",
@@ -26,12 +27,12 @@ addEventListener("fetch", event => {
 async function handleRequest(request) {
   const url = new URL(request.url);
 
-  // ── Preflight ──────────────────────────────────────────────────────────────
+  // Preflight
   if (request.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: CORS });
   }
 
-  // ── Health check ───────────────────────────────────────────────────────────
+  // Health check
   if (url.pathname === "/ping") {
     return new Response(JSON.stringify({ ok: true, message: "Fax proxy is alive" }), {
       status: 200,
@@ -39,18 +40,16 @@ async function handleRequest(request) {
     });
   }
 
-  // ── Proxy to Phaxio ────────────────────────────────────────────────────────
-  const target = PHAXIO + url.pathname + url.search;
+  // Proxy to Sinch Fax API
+  const target = SINCH_FAX + url.pathname + url.search;
 
-  // Copy headers, drop host
   const headers = {};
   for (const [key, val] of request.headers.entries()) {
     if (key !== "host") headers[key] = val;
   }
 
-  // Read body as buffer so it can be forwarded cleanly
   let body = null;
-  if (request.method !== "GET" && request.method !== "HEAD") {
+  if (!["GET", "HEAD"].includes(request.method)) {
     body = await request.arrayBuffer();
   }
 
@@ -60,7 +59,6 @@ async function handleRequest(request) {
     body:    body,
   });
 
-  // Copy response, add CORS headers
   const resHeaders = {};
   for (const [key, val] of upstream.headers.entries()) {
     resHeaders[key] = val;

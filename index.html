@@ -186,23 +186,27 @@ footer{padding:12px 16px;text-align:center;font-size:11px;color:var(--muted);bor
         <span class="hint" id="balance-detail">Balance will show after testing connection.</span>
       </div>
       <div class="s-row">
-        <span class="hint">Top up at <a href="https://console.sinch.com" target="_blank">console.sinch.com</a> &nbsp;·&nbsp; ~$0.07/page</span>
+        <span class="hint">Top up at <a href="https://dashboard.sinch.com" target="_blank">dashboard.sinch.com</a> &nbsp;·&nbsp; ~$0.07/page</span>
       </div>
     </div>
 
     <!-- API credentials -->
     <div class="s-section">
-      <div class="s-section-title">Sinch / Phaxio Credentials</div>
+      <div class="s-section-title">Sinch Credentials</div>
       <div class="s-row">
-        <label>API Key ID</label>
+        <label>Project ID</label>
+        <input type="text" id="s-project" placeholder="12de7a17-…" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="s-row">
+        <label>Access Key ID</label>
         <input type="text" id="s-key" placeholder="d633c79a-…" autocomplete="off" spellcheck="false">
       </div>
       <div class="s-row">
-        <label>API Secret</label>
+        <label>Key Secret</label>
         <input type="password" id="s-secret" placeholder="q_IyRp…" autocomplete="new-password">
       </div>
       <div class="s-row">
-        <span class="hint">Find these at <a href="https://console.sinch.com" target="_blank">console.sinch.com</a> → Access Keys</span>
+        <span class="hint">Find these at <a href="https://dashboard.sinch.com" target="_blank">dashboard.sinch.com</a> → Access Keys</span>
       </div>
     </div>
 
@@ -211,8 +215,8 @@ footer{padding:12px 16px;text-align:center;font-size:11px;color:var(--muted);bor
       <div class="s-section-title">CORS Proxy (required for sending)</div>
       <div class="s-row">
         <label>Cloudflare Worker URL</label>
-        <input type="text" id="s-proxy" placeholder="https://fax-proxy.yourname.workers.dev" autocomplete="off">
-        <span class="hint" style="margin-top:4px">Without this, the browser cannot reach the Phaxio API. Free to set up — <a href="https://workers.cloudflare.com" target="_blank">workers.cloudflare.com</a></span>
+        <input type="text" id="s-proxy" placeholder="https://quicktax.ajoiventures.workers.dev" autocomplete="off">
+        <span class="hint" style="margin-top:4px">Required — browser can't call Sinch directly. Free to deploy — <a href="https://workers.cloudflare.com" target="_blank">workers.cloudflare.com</a></span>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <span id="proxy-status" class="status-pill" style="display:none"></span>
@@ -408,7 +412,7 @@ footer{padding:12px 16px;text-align:center;font-size:11px;color:var(--muted);bor
       <div class="summary-row"><span class="lbl">To</span><span class="val" id="sum-to">—</span></div>
       <div class="summary-row"><span class="lbl">Cover</span><span class="val" id="sum-cover">—</span></div>
       <div class="summary-row"><span class="lbl">Est. cost</span><span class="val" id="sum-cost">—</span></div>
-      <div class="summary-row"><span class="lbl">Balance</span><span class="val" id="sum-balance">—</span></div>
+      <div class="summary-row"><span class="lbl">Balance</span><span class="val" id="sum-balance"><a href="https://dashboard.sinch.com" target="_blank" style="color:var(--accent)">View at dashboard.sinch.com →</a></span></div>
       <div class="summary-row"><span class="lbl">Proxy</span><span class="val" id="sum-proxy">—</span></div>
     </div>
     <div id="no-proxy-warn" class="info-box" style="display:none">
@@ -423,7 +427,7 @@ footer{padding:12px 16px;text-align:center;font-size:11px;color:var(--muted);bor
 
 </main>
 
-<footer>Powered by Sinch / Phaxio &nbsp;·&nbsp; ajoiventures &nbsp;·&nbsp; <a href="#" onclick="openSettings();return false" style="color:var(--accent);text-decoration:none">Settings</a></footer>
+<footer>Powered by Sinch Fax API &nbsp;·&nbsp; ajoiventures &nbsp;·&nbsp; <a href="#" onclick="openSettings();return false" style="color:var(--accent);text-decoration:none">Settings</a></footer>
 
 <canvas id="proc-canvas" style="display:none"></canvas>
 
@@ -431,9 +435,10 @@ footer{padding:12px 16px;text-align:center;font-size:11px;color:var(--muted);bor
 <script>
 // ── Default credentials (overridden by localStorage) ─────────────────────────
 const DEFAULTS = {
-  key:    "d633c79a-c3db-40ce-8298-8b385d0799cb",
-  secret: "q_IyRpb3MqmGB5rJY2bGnXt-dG",
-  proxy:  "",
+  project: "12de7a17-948a-4f8d-9e20-815207f0aee7",
+  key:     "d633c79a-c3db-40ce-8298-8b385d0799cb",
+  secret:  "q_IyRpb3MqmGB5rJY2bGnXt-dG",
+  proxy:   "https://quicktax.ajoiventures.workers.dev",
   bw:        true,
   rotate:    true,
   contrast:  true,
@@ -452,14 +457,19 @@ function saveSettingsData(s) {
 }
 let CFG = loadSettings();
 function getAuth() { return 'Basic ' + btoa(CFG.key + ':' + CFG.secret); }
+function getBase() {
+  return (CFG.proxy ? CFG.proxy.replace(/\/$/, '') : 'https://fax.api.sinch.com');
+}
 function getEndpoint() {
-  return CFG.proxy
-    ? CFG.proxy.replace(/\/$/, '') + '/v2.1/faxes'
-    : 'https://api.phaxio.com/v2.1/faxes';
+  return getBase() + '/v3/projects/' + CFG.project + '/faxes';
+}
+function getStatusEndpoint(faxId) {
+  return getBase() + '/v3/projects/' + CFG.project + '/faxes/' + faxId;
 }
 
 // ── Settings drawer ───────────────────────────────────────────────────────────
 function openSettings() {
+  document.getElementById('s-project').value      = CFG.project;
   document.getElementById('s-key').value          = CFG.key;
   document.getElementById('s-secret').value       = CFG.secret;
   document.getElementById('s-proxy').value        = CFG.proxy;
@@ -480,8 +490,9 @@ function closeSettings() {
 }
 function saveSettings() {
   CFG = {
-    key:      document.getElementById('s-key').value.trim()    || DEFAULTS.key,
-    secret:   document.getElementById('s-secret').value.trim() || DEFAULTS.secret,
+    project:  document.getElementById('s-project').value.trim() || DEFAULTS.project,
+    key:      document.getElementById('s-key').value.trim()     || DEFAULTS.key,
+    secret:   document.getElementById('s-secret').value.trim()  || DEFAULTS.secret,
     proxy:    document.getElementById('s-proxy').value.trim(),
     bw:       document.getElementById('s-bw').checked,
     rotate:   document.getElementById('s-rotate').checked,
@@ -504,52 +515,41 @@ function clearSettings() {
 }
 
 async function testConnection() {
-  const pill = document.getElementById('conn-status');
+  const pill   = document.getElementById('conn-status');
   const detail = document.getElementById('balance-detail');
   pill.className = 'status-pill checking';
   pill.textContent = '⏳ Checking…';
   try {
-    const key    = document.getElementById('s-key').value.trim()    || CFG.key;
-    const secret = document.getElementById('s-secret').value.trim() || CFG.secret;
-    const auth   = 'Basic ' + btoa(key + ':' + secret);
-    const proxy  = document.getElementById('s-proxy').value.trim();
-    const base   = proxy ? proxy.replace(/\/$/, '') : 'https://api.phaxio.com';
-    const r = await fetch(`${base}/v2.1/account/status`, { headers: { 'Authorization': auth } });
-    const d = await r.json();
-    if (!d.success) throw new Error(d.message || 'Auth failed');
-    const bal = d.data?.balance ?? 0;
-    const dollars = (bal / 100).toFixed(2);
+    const project = document.getElementById('s-project').value.trim() || CFG.project;
+    const key     = document.getElementById('s-key').value.trim()     || CFG.key;
+    const secret  = document.getElementById('s-secret').value.trim()  || CFG.secret;
+    const auth    = 'Basic ' + btoa(key + ':' + secret);
+    const proxy   = document.getElementById('s-proxy').value.trim();
+    const base    = proxy ? proxy.replace(/\/$/, '') : 'https://fax.api.sinch.com';
+    const r = await fetch(`${base}/v3/projects/${project}/faxes?pageSize=1`, { headers: { 'Authorization': auth } });
+    if (r.status === 401 || r.status === 403) throw new Error('Invalid credentials');
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
     pill.className = 'status-pill ok';
-    pill.textContent = `✓ Connected — $${dollars}`;
-    detail.textContent = `Balance: $${dollars} — enough for ~${Math.floor(bal / 7)} pages`;
-    updateBalanceChip(bal);
+    pill.textContent = '✓ Connected';
+    detail.textContent = 'Sinch credentials valid. Balance: see dashboard.sinch.com';
+    setBalanceChip('ok');
   } catch (e) {
     pill.className = 'status-pill fail';
-    pill.textContent = '✗ ' + (e.message.includes('fetch') ? 'CORS blocked — add proxy URL' : e.message);
-    detail.textContent = 'Connection failed. Check credentials or add a proxy URL.';
-    updateBalanceChip(null);
+    pill.textContent = '✗ ' + (e.message.toLowerCase().includes('fetch') ? 'CORS blocked — check proxy URL' : e.message);
+    detail.textContent = 'Connection failed. Check credentials and proxy URL.';
+    setBalanceChip('err');
   }
 }
 
-// ── Balance chip ──────────────────────────────────────────────────────────────
-function updateBalanceChip(cents) {
+// ── Balance chip (Sinch has no balance API — link to dashboard) ───────────────
+function setBalanceChip(state) {
   const chip = document.getElementById('balance-chip');
-  if (cents === null) { chip.textContent = '⚠️'; chip.className = 'balance-chip low'; return; }
-  const s = `$${(cents/100).toFixed(2)}`;
-  chip.textContent = s;
-  chip.className   = 'balance-chip ' + (cents > 100 ? 'ok' : cents > 0 ? 'low' : 'empty');
-  document.getElementById('sum-balance').textContent = s + (cents < 100 ? ' ⚠️ Low — top up before sending' : '');
+  if (state === 'ok')  { chip.textContent = '✓'; chip.className = 'balance-chip ok';  return; }
+  if (state === 'err') { chip.textContent = '⚠️'; chip.className = 'balance-chip low'; return; }
 }
-async function checkBalance() {
-  try {
-    const r = await fetch((CFG.proxy ? CFG.proxy.replace(/\/$/, '') : 'https://api.phaxio.com') + '/v2.1/account/status',
-      { headers: { 'Authorization': getAuth() } });
-    const d = await r.json();
-    if (d.success) updateBalanceChip(d.data?.balance ?? 0);
-    else throw new Error();
-  } catch { updateBalanceChip(null); }
-}
-checkBalance();
+function updateBalanceChip() { /* no-op — Sinch has no balance REST endpoint */ }
+async function checkBalance() { /* no-op */ }
+setBalanceChip('ok'); // assume ok until test proves otherwise
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
 function showToast(msg) {
@@ -715,14 +715,15 @@ async function sendFax() {
   let digits=getFaxNumber().replace(/\D/g,''); if(digits.length===10) digits='1'+digits;
   try {
     const fd=new FormData();
-    fd.append('to[0]','+'+digits);
-    pages.forEach((pg,i)=>fd.append(`file[${i}]`,pg.blob,`page_${i+1}.jpg`));
+    fd.append('to','+'+digits);
+    pages.forEach((pg,i)=>fd.append('file',pg.blob,`page_${i+1}.jpg`));
     const cover=document.getElementById('cover-text').value.trim();
-    if(cover) fd.append('cover_page_text',cover);
+    if(cover) fd.append('header',cover);
     const resp=await fetch(getEndpoint(),{method:'POST',headers:{'Authorization':getAuth()},body:fd});
-    const data=await resp.json();
-    if(!data.success) throw new Error(data.message||'API error');
-    const faxId=data.data?.id;
+    const text=await resp.text();
+    const data=text?JSON.parse(text):{};
+    if(!resp.ok) throw new Error(data?.title||data?.detail||`HTTP ${resp.status}`);
+    const faxId=data.id;
     document.getElementById('send-btns').style.display='none';
     showDeliveryTracker(faxId,digits); startPolling(faxId);
   } catch(err) {
@@ -750,13 +751,14 @@ function showDeliveryTracker(faxId,digits) {
 function startPolling(faxId) {
   let n=0;
   pollTimer=setInterval(async()=>{
-    if(++n>20){clearInterval(pollTimer);const c=document.getElementById('tracker-card');if(c)c.querySelector('p:last-of-type').textContent='Still in progress — check your Sinch dashboard.';return;}
+    if(++n>20){clearInterval(pollTimer);const c=document.getElementById('tracker-card');if(c)c.querySelector('p:last-of-type').textContent='Still in progress — check dashboard.sinch.com.';return;}
     try{
-      const r=await fetch((CFG.proxy?CFG.proxy.replace(/\/$/,''):'https://api.phaxio.com')+`/v2.1/faxes/${faxId}`,{headers:{'Authorization':getAuth()}});
-      const d=await r.json(); if(!d.success) return;
-      const st=d.data?.status;
-      if(st==='success'){clearInterval(pollTimer);updateTracker('success',d.data);}
-      else if(st==='failed'){clearInterval(pollTimer);updateTracker('failed',d.data);}
+      const r=await fetch(getStatusEndpoint(faxId),{headers:{'Authorization':getAuth()}});
+      if(!r.ok) return;
+      const t=await r.text(); const d=t?JSON.parse(t):{};
+      const st=d.status; // Sinch: QUEUED, IN_PROGRESS, COMPLETED, FAILED
+      if(st==='COMPLETED'){clearInterval(pollTimer);updateTracker('success',d);}
+      else if(st==='FAILED'){clearInterval(pollTimer);updateTracker('failed',d);}
     }catch{}
   },15000);
 }
@@ -769,7 +771,7 @@ function updateTracker(result,data) {
     dd.className='delivery-step done'; dd.querySelector('.dlabel').textContent='✓ Delivered';
   } else if(result==='failed'){
     card.className='result-card error'; card.querySelector('h3').textContent='❌ Delivery Failed';
-    const reason=data?.recipients?.[0]?.error_type||'Unknown';
+    const reason=data?.errorType||data?.error||'Unknown';
     card.querySelector('p:last-of-type').textContent=`Failed: ${reason}. Check number and retry.`;
     ds.className='delivery-step failed'; dd.className='delivery-step failed';
     document.getElementById('send-btns').style.display='flex';
