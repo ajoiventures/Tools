@@ -38,17 +38,25 @@ header p{font-size:11px;color:var(--muted);margin-top:1px;text-transform:upperca
 main{min-height:0;padding:14px 16px;width:100%;height:100%;overflow:hidden;background:linear-gradient(180deg,rgba(215,200,155,.08),rgba(0,0,0,0));}
 .panel{display:none;gap:12px;height:100%;min-height:0;overflow:hidden;}
 .panel.active{display:grid;}
-#step1.active{grid-template-columns:minmax(300px,400px) minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr) auto;grid-template-areas:"title tray" "actions tray" "tray tray" "next tray";align-items:stretch;max-width:none;}
-#step1 h2,#step1 .sub{grid-area:title;}
-#step1 .sub{margin-top:30px;align-self:start;}
+#step1.active{position:relative;grid-template-columns:minmax(300px,360px) minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr) auto;grid-template-areas:"title tray" "actions tray" "status tray" "next tray";align-items:stretch;max-width:none;}
+#step1.active::before{content:"";grid-column:1;grid-row:1 / 5;background:linear-gradient(180deg,#e5d5a7,#c6b276);border:2px solid var(--border);border-radius:var(--radius);box-shadow:inset 0 0 0 2px rgba(255,255,255,.15),0 4px 0 #090805;z-index:0;}
+#step1 h2{grid-area:title;z-index:1;color:var(--ink);padding:22px 24px 8px;border-bottom:2px solid rgba(90,79,52,.55);margin:0 18px;font-size:18px;}
+#step1 .sub{display:none;}
 #step1 .cam-row{grid-area:actions;}
-#step1 .proc-banner{grid-area:actions;align-self:end;}
-#step1 .page-count{grid-area:tray;align-self:start;z-index:1;margin:12px;}
-#step1 .page-grid{grid-area:tray;align-self:stretch;overflow:hidden;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));align-content:start;background:var(--paper);border:2px solid var(--border);border-radius:var(--radius);padding:54px 16px 16px;color:var(--ink);}
-#step1 #no-pages{grid-area:tray;align-self:stretch;display:flex!important;align-items:center;justify-content:center;min-height:0;background:var(--paper);color:#5a4f34;border:2px dashed #75653d;}
+#step1 .cam-row{z-index:1;margin:8px 18px;align-self:start;flex-direction:column;}
+#step1 .proc-banner{grid-area:status;z-index:1;align-self:start;margin:8px 18px;background:#17160f;color:var(--text);}
+#step1 .page-count{grid-area:tray;align-self:start;z-index:2;margin:14px 18px;color:#5a4f34;font-weight:900;text-transform:uppercase;}
+#step1 .page-grid{grid-area:tray;align-self:stretch;overflow:hidden;display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));align-content:start;background:linear-gradient(180deg,#e5d5a7,#c6b276);border:2px solid var(--border);border-radius:var(--radius);padding:58px 18px 18px;color:var(--ink);box-shadow:inset 0 0 0 2px rgba(255,255,255,.15),0 4px 0 #090805;}
+#step1 #no-pages{grid-area:tray;align-self:stretch;display:flex!important;align-items:center;justify-content:center;min-height:0;background:linear-gradient(180deg,#e5d5a7,#c6b276);color:#5a4f34;border:2px dashed #75653d;border-radius:var(--radius);font-weight:900;text-transform:uppercase;letter-spacing:1px;}
 #step1 .page-grid:not(:empty) + #no-pages{display:none!important;}
-#step1 #btn-next1{grid-area:next;align-self:end;}
-#step2.active,#step3.active,#step4.active,#step5.active{grid-template-rows:auto auto minmax(0,1fr) auto;max-width:1100px;margin:0 auto;width:100%;}
+#step1 #btn-next1{grid-area:next;z-index:1;align-self:end;margin:8px 18px 22px;width:auto;}
+#step2.active,#step3.active,#step4.active,#step5.active{grid-template-rows:auto minmax(0,1fr) auto;max-width:1100px;margin:0 auto;width:100%;}
+#step2.active{grid-template-rows:auto auto minmax(0,1fr) auto auto;}
+#step3.active{grid-template-rows:auto auto auto minmax(0,1fr) auto;}
+#step4.active{grid-template-rows:auto auto auto minmax(0,1fr) auto;}
+.review-text-panel{min-height:0;display:flex;flex-direction:column;}
+.review-text-panel textarea{height:100%;min-height:0;resize:none;}
+#cover-text{min-height:60px;resize:none;}
 h2{font-size:18px;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:var(--accent);}
 p.sub{font-size:13px;color:var(--muted);line-height:1.5;}
 
@@ -150,8 +158,15 @@ textarea{min-height:90px;}
 .thumb-strip img.active{border-color:var(--accent);}
 .thumb-dl{position:absolute;top:2px;right:2px;background:var(--accent);color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;opacity:0;transition:opacity .2s;z-index:10;}
 .thumb-container:hover .thumb-dl{opacity:1;}
-.adjust-preview{background:#0e0e0a;border:2px solid var(--border);border-radius:var(--radius);min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.adjust-preview{background:#0e0e0a;border:2px solid var(--border);border-radius:var(--radius);min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;touch-action:none;}
 .adjust-preview img{max-width:100%;max-height:100%;object-fit:contain;display:block;}
+.adjust-stage{position:relative;max-width:100%;max-height:100%;display:flex;align-items:center;justify-content:center;}
+.crop-box{position:absolute;border:2px solid var(--accent);background:rgba(242,180,61,.08);box-shadow:0 0 0 9999px rgba(0,0,0,.48);cursor:move;touch-action:none;}
+.crop-handle{position:absolute;width:24px;height:24px;border-radius:50%;background:var(--accent);border:3px solid #11110d;box-shadow:0 0 0 2px rgba(255,255,255,.7);touch-action:none;}
+.crop-handle.tl{left:-13px;top:-13px;cursor:nwse-resize;}
+.crop-handle.tr{right:-13px;top:-13px;cursor:nesw-resize;}
+.crop-handle.br{right:-13px;bottom:-13px;cursor:nwse-resize;}
+.crop-handle.bl{left:-13px;bottom:-13px;cursor:nesw-resize;}
 .adjust-empty{color:var(--muted);font-size:13px;padding:24px;text-align:center;}
 #ocr-status{display:none;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);font-size:13px;}
 #ocr-status.show{display:flex;}
@@ -191,8 +206,13 @@ footer{padding:8px 16px;text-align:center;font-size:11px;color:var(--muted);bord
   .step-pill .num{width:16px;height:16px;font-size:10px;}
   main{padding:10px;}
   #step1.active{grid-template-columns:1fr;grid-template-rows:auto auto minmax(0,1fr) auto;grid-template-areas:"title" "actions" "tray" "next";}
-  #step1 .sub{margin-top:26px;}
-  .cam-row{gap:8px;}
+  #step1.active::before{display:none;}
+  #step1 h2{margin:0;padding:0 0 2px;border:0;color:var(--accent);font-size:17px;}
+  #step1 .cam-row{flex-direction:row;margin:0;gap:8px;}
+  #step1 .proc-banner{margin:0;}
+  #step1 #btn-next1{margin:0;width:100%;}
+  #step1 .page-count{margin:8px 0;grid-area:tray;}
+  #step1 .page-grid{padding:48px 10px 10px;}
   .btn-camera,.btn{padding:11px 10px;font-size:12px;}
 }
 
@@ -436,7 +456,6 @@ footer{padding:8px 16px;text-align:center;font-size:11px;color:var(--muted);bord
   <!-- STEP 1 -->
   <div class="panel active" id="step1">
     <h2>Scan Your Pages</h2>
-    <p class="sub">Take photos one by one. Each image is auto-resized and converted to fax-ready B&amp;W.</p>
     <div class="cam-row">
       <button class="btn-camera" onclick="openCamera()">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
@@ -466,28 +485,30 @@ footer{padding:8px 16px;text-align:center;font-size:11px;color:var(--muted);bord
   <!-- STEP 2 -->
   <div class="panel" id="step2">
     <h2>Adjust Pages</h2>
-    <p class="sub">Check each cropped page before OCR review and fax details.</p>
     <div class="thumb-strip" id="adjust-strip"></div>
     <div class="adjust-preview" id="adjust-preview">
       <div class="adjust-empty">Select a page to preview</div>
     </div>
     <div class="btn-row">
+      <button class="btn btn-ghost" onclick="autoFitAdjustCrop()">Auto fit</button>
+      <button class="btn btn-ghost" onclick="fullPageAdjustCrop()">Full page</button>
+      <button class="btn btn-primary" onclick="applyAdjustCrop()">Apply Crop</button>
+    </div>
+    <div class="btn-row">
       <button class="btn btn-ghost" onclick="goStep(1)">Back</button>
-      <button class="btn btn-primary" onclick="goStep(3)">Review Text -></button>
+      <button class="btn btn-primary" onclick="finishAdjust()">Review Text -></button>
     </div>
   </div>
 
   <!-- STEP 3 -->
   <div class="panel" id="step3">
     <h2>Review Pages</h2>
-    <p class="sub">Tap a thumbnail to check the image and verify it's readable.</p>
     <div class="thumb-strip" id="thumb-strip"></div>
     <div id="ocr-status"><div class="spinner"></div><span id="ocr-msg">Reading…</span></div>
-    <div>
+    <div class="review-text-panel">
       <div class="field-label">OCR Text — Page <span id="ocr-page-label">1</span></div>
       <textarea id="ocr-text" rows="7" placeholder="Select a page above…" readonly></textarea>
     </div>
-    <div class="info-box">💡 <strong>Tip:</strong> The processed B&amp;W image is faxed — this text is just a readability check.</div>
     <div class="btn-row">
       <button class="btn btn-ghost" onclick="goStep(2)">Back</button>
       <button class="btn btn-primary" onclick="goStep(4)">Continue -></button>
@@ -517,7 +538,6 @@ footer{padding:8px 16px;text-align:center;font-size:11px;color:var(--muted);bord
       <div class="field-label">Cover Note <span style="font-weight:400;text-transform:none">(optional)</span></div>
       <textarea id="cover-text" rows="3" placeholder="e.g. Re: CP2000, John Doe, SSN ending 4321"></textarea>
     </div>
-    <div class="info-box">⚠️ <strong>Verify IRS numbers at <a href="https://irs.gov" target="_blank">irs.gov</a></strong> — they change without notice.</div>
     <div class="btn-row">
       <button class="btn btn-ghost" onclick="goStep(3)">Back</button>
       <button class="btn btn-primary" onclick="goStep(5)">Review &amp; Send -></button>
@@ -971,6 +991,7 @@ async function dbLoadPages() {
 
 // ── Pages state ───────────────────────────────────────────────────────────────
 let pages = [], ocrCache = {}, currentStep = 1, pollTimer = null;
+let currentAdjustIndex = 0, adjustCrop = {}, adjustDrag = null;
 
 async function addFiles(files) {
   const banner = document.getElementById('proc-banner');
@@ -1064,15 +1085,143 @@ function buildAdjustStrip() {
 }
 
 function selectAdjustPage(i) {
+  currentAdjustIndex = i;
   document.querySelectorAll('#adjust-strip img').forEach((img,idx)=>img.classList.toggle('active',idx===i));
   const preview=document.getElementById('adjust-preview');
   const pg=pages[i];
   if(!pg){ preview.innerHTML='<div class="adjust-empty">Select a page to preview</div>'; return; }
+  if(pg.blob?.type==='application/pdf'){ preview.innerHTML='<div class="adjust-empty">PDF uploads are kept as-is.</div>'; return; }
   preview.innerHTML='';
+  if(!adjustCrop[i]) adjustCrop[i]={x:.025,y:.025,w:.95,h:.95};
+  const stage=document.createElement('div'); stage.className='adjust-stage';
   const img=document.createElement('img');
   img.src=pg.url;
   img.alt=`Adjusted page ${i+1}`;
-  preview.appendChild(img);
+  img.onload=()=>drawAdjustCrop();
+  stage.appendChild(img);
+  preview.appendChild(stage);
+}
+
+function getCropBox() {
+  return document.querySelector('#adjust-preview .crop-box');
+}
+
+function clampCrop(r) {
+  const min=.06;
+  let x=Math.max(0,Math.min(.98,r.x)), y=Math.max(0,Math.min(.98,r.y));
+  let w=Math.max(min,Math.min(1-x,r.w)), h=Math.max(min,Math.min(1-y,r.h));
+  return {x,y,w,h};
+}
+
+function drawAdjustCrop() {
+  const stage=document.querySelector('#adjust-preview .adjust-stage');
+  const img=document.querySelector('#adjust-preview img');
+  if(!stage||!img) return;
+  getCropBox()?.remove();
+  const r=adjustCrop[currentAdjustIndex] || {x:.025,y:.025,w:.95,h:.95};
+  const box=document.createElement('div');
+  box.className='crop-box';
+  Object.assign(box.style,{
+    left:(r.x*img.clientWidth)+'px',
+    top:(r.y*img.clientHeight)+'px',
+    width:(r.w*img.clientWidth)+'px',
+    height:(r.h*img.clientHeight)+'px'
+  });
+  box.addEventListener('pointerdown',e=>startAdjustDrag(e,'move'));
+  ['tl','tr','br','bl'].forEach(pos=>{
+    const h=document.createElement('span');
+    h.className='crop-handle '+pos;
+    h.addEventListener('pointerdown',e=>startAdjustDrag(e,pos));
+    box.appendChild(h);
+  });
+  stage.appendChild(box);
+}
+
+function startAdjustDrag(e,mode) {
+  e.preventDefault();
+  e.stopPropagation();
+  const img=document.querySelector('#adjust-preview img');
+  if(!img) return;
+  adjustDrag={mode,startX:e.clientX,startY:e.clientY,start:{...(adjustCrop[currentAdjustIndex]||{x:.025,y:.025,w:.95,h:.95})},imgW:img.clientWidth,imgH:img.clientHeight};
+  e.currentTarget.setPointerCapture?.(e.pointerId);
+}
+
+document.addEventListener('pointermove',e=>{
+  if(!adjustDrag) return;
+  const dx=(e.clientX-adjustDrag.startX)/adjustDrag.imgW;
+  const dy=(e.clientY-adjustDrag.startY)/adjustDrag.imgH;
+  const s=adjustDrag.start;
+  let r={...s};
+  if(adjustDrag.mode==='move') { r.x=s.x+dx; r.y=s.y+dy; }
+  if(adjustDrag.mode.includes('l')) { r.x=s.x+dx; r.w=s.w-dx; }
+  if(adjustDrag.mode.includes('r')) { r.w=s.w+dx; }
+  if(adjustDrag.mode.includes('t')) { r.y=s.y+dy; r.h=s.h-dy; }
+  if(adjustDrag.mode.includes('b')) { r.h=s.h+dy; }
+  adjustCrop[currentAdjustIndex]=clampCrop(r);
+  drawAdjustCrop();
+});
+document.addEventListener('pointerup',()=>{ adjustDrag=null; });
+
+async function blobToCanvas(blob) {
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    const url=URL.createObjectURL(blob);
+    img.onload=()=>{
+      URL.revokeObjectURL(url);
+      const c=document.createElement('canvas');
+      c.width=img.naturalWidth||img.width; c.height=img.naturalHeight||img.height;
+      c.getContext('2d',{willReadFrequently:true}).drawImage(img,0,0);
+      resolve(c);
+    };
+    img.onerror=()=>{ URL.revokeObjectURL(url); reject(new Error('Image could not be loaded.')); };
+    img.src=url;
+  });
+}
+
+async function autoFitAdjustCrop() {
+  const pg=pages[currentAdjustIndex];
+  if(!pg || pg.blob?.type==='application/pdf') return;
+  const c=await blobToCanvas(pg.blob);
+  const corners=detectDocumentCornersSafe(c);
+  const xs=corners.map(p=>p[0]), ys=corners.map(p=>p[1]);
+  adjustCrop[currentAdjustIndex]=clampCrop({
+    x:Math.min(...xs)/c.width,
+    y:Math.min(...ys)/c.height,
+    w:(Math.max(...xs)-Math.min(...xs))/c.width,
+    h:(Math.max(...ys)-Math.min(...ys))/c.height
+  });
+  drawAdjustCrop();
+}
+
+function fullPageAdjustCrop() {
+  adjustCrop[currentAdjustIndex]={x:.025,y:.025,w:.95,h:.95};
+  drawAdjustCrop();
+}
+
+async function applyAdjustCrop(showToastMessage=true) {
+  const pg=pages[currentAdjustIndex];
+  const r=adjustCrop[currentAdjustIndex];
+  if(!pg || !r || pg.blob?.type==='application/pdf') return;
+  const src=await blobToCanvas(pg.blob);
+  const sx=Math.round(r.x*src.width), sy=Math.round(r.y*src.height);
+  const sw=Math.max(1,Math.round(r.w*src.width)), sh=Math.max(1,Math.round(r.h*src.height));
+  const out=document.createElement('canvas');
+  out.width=sw; out.height=sh;
+  out.getContext('2d',{willReadFrequently:true}).drawImage(src,sx,sy,sw,sh,0,0,sw,sh);
+  const blob=await new Promise(res=>out.toBlob(res,'image/jpeg',parseFloat(CFG.quality)));
+  URL.revokeObjectURL(pg.url);
+  pages[currentAdjustIndex]={blob,url:URL.createObjectURL(blob),processing:false};
+  dbSavePage(currentAdjustIndex,blob);
+  delete ocrCache[currentAdjustIndex];
+  renderGrid();
+  buildAdjustStrip();
+  selectAdjustPage(currentAdjustIndex);
+  if(showToastMessage) showToast('Crop applied');
+}
+
+async function finishAdjust() {
+  await applyAdjustCrop(false);
+  goStep(3);
 }
 
 function buildThumbStrip() {
