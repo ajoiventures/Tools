@@ -567,6 +567,27 @@ function showToast(msg) {
 
 // ── Image processing ──────────────────────────────────────────────────────────
 const FAX_W = 1728, FAX_H = 2236;
+function findDocumentBounds(imageData) {
+  const d = imageData.data, w = imageData.width, h = imageData.height;
+  let minX = w, maxX = 0, minY = h, maxY = 0, found = false;
+  for (let i = 0; i < d.length; i += 4) {
+    const gray = d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114;
+    if (gray < 200) {
+      found = true;
+      const idx = i / 4, x = idx % w, y = Math.floor(idx / w);
+      minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+      minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+    }
+  }
+  if (!found) return { x: 0, y: 0, w: w, h: h };
+  const margin = 20;
+  return {
+    x: Math.max(0, minX - margin),
+    y: Math.max(0, minY - margin),
+    w: Math.min(w, maxX + margin) - Math.max(0, minX - margin),
+    h: Math.min(h, maxY + margin) - Math.max(0, minY - margin)
+  };
+}
 async function processImage(file) {
   return new Promise(resolve => {
     if (file.type === 'application/pdf') { resolve(file); return; }
@@ -578,26 +599,34 @@ async function processImage(file) {
       const ctx    = canvas.getContext('2d');
       const sw = img.naturalWidth, sh = img.naturalHeight;
       const isLand = CFG.rotate && sw > sh;
-      const dw = isLand ? sh : sw, dh = isLand ? sw : sh;
+      let dw = isLand ? sh : sw, dh = isLand ? sw : sh;
+      canvas.width = dw; canvas.height = dh;
+      ctx.save();
+      if (isLand) {
+        ctx.translate(dw/2, dh/2); ctx.rotate(Math.PI/2);
+        ctx.drawImage(img, -dh/2, -dw/2, dh, dw);
+      } else {
+        ctx.drawImage(img, 0, 0, dw, dh);
+      }
+      ctx.restore();
+      const id = ctx.getImageData(0, 0, dw, dh);
+      const bounds = findDocumentBounds(id);
+      const cropped = ctx.getImageData(bounds.x, bounds.y, bounds.w, bounds.h);
+      canvas.width = bounds.w; canvas.height = bounds.h;
+      ctx.putImageData(cropped, 0, 0);
+      dw = bounds.w; dh = bounds.h;
       const scale = Math.min(FAX_W / dw, FAX_H / dh);
       const ow = Math.round(dw * scale), oh = Math.round(dh * scale);
       canvas.width = ow; canvas.height = oh;
-      ctx.save();
-      if (isLand) {
-        ctx.translate(ow/2, oh/2); ctx.rotate(Math.PI/2);
-        ctx.drawImage(img, -oh/2, -ow/2, oh, ow);
-      } else {
-        ctx.drawImage(img, 0, 0, ow, oh);
-      }
-      ctx.restore();
+      ctx.drawImage(canvas, 0, 0, dw, dh, 0, 0, ow, oh);
       if (CFG.bw) {
-        const id = ctx.getImageData(0,0,ow,oh), d = id.data;
+        const idata = ctx.getImageData(0,0,ow,oh), d = idata.data;
         for (let i=0;i<d.length;i+=4) {
           let g = .299*d[i] + .587*d[i+1] + .114*d[i+2];
           if (CFG.contrast) g = Math.min(255, Math.max(0, (g-128)*1.4+128));
           d[i]=d[i+1]=d[i+2]=g;
         }
-        ctx.putImageData(id,0,0);
+        ctx.putImageData(idata,0,0);
       }
       canvas.toBlob(b => resolve(b), 'image/jpeg', parseFloat(CFG.quality));
     };
