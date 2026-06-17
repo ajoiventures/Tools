@@ -1,0 +1,5 @@
+fax_log.jsonl
+node_modules/
+.netlify/
+*.env
+.env*
