@@ -1,57 +1,76 @@
 /**
  * Fax Proxy — Cloudflare Worker
- * Proxies requests from the browser to api.phaxio.com, adding CORS headers.
  *
  * DEPLOY:
  * 1. dash.cloudflare.com → Workers & Pages → Create → Create Worker
- * 2. Delete default code, paste this entire file, click Deploy
- * 3. Copy the *.workers.dev URL → paste into Fax App Settings → Cloudflare Worker URL
+ * 2. Delete ALL default code, paste this entire file
+ * 3. Click "Save and Deploy"
+ * 4. Copy the *.workers.dev URL → paste into Fax App Settings → Cloudflare Worker URL
+ *
+ * TEST: open https://your-worker.workers.dev/ping in your browser
+ *       you should see: {"ok":true,"message":"Fax proxy is alive"}
  */
 
 const PHAXIO = "https://api.phaxio.com";
 
-const CORS_HEADERS = {
+const CORS = {
   "Access-Control-Allow-Origin":  "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Authorization, Content-Type",
-  "Access-Control-Max-Age":       "86400",
 };
 
-export default {
-  async fetch(request) {
+addEventListener("fetch", event => {
+  event.respondWith(handleRequest(event.request));
+});
 
-    // Preflight
-    if (request.method === "OPTIONS") {
-      return new Response(null, { status: 204, headers: CORS_HEADERS });
-    }
+async function handleRequest(request) {
+  const url = new URL(request.url);
 
-    const url      = new URL(request.url);
-    const upstream = PHAXIO + url.pathname + url.search;
+  // ── Preflight ──────────────────────────────────────────────────────────────
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: CORS });
+  }
 
-    // Forward headers — strip host so Phaxio doesn't reject it
-    const headers = new Headers();
-    for (const [key, val] of request.headers.entries()) {
-      if (key.toLowerCase() !== "host") headers.set(key, val);
-    }
+  // ── Health check ───────────────────────────────────────────────────────────
+  if (url.pathname === "/ping") {
+    return new Response(JSON.stringify({ ok: true, message: "Fax proxy is alive" }), {
+      status: 200,
+      headers: { "Content-Type": "application/json", ...CORS },
+    });
+  }
 
-    const init = {
-      method:   request.method,
-      headers,
-      redirect: "follow",
-    };
+  // ── Proxy to Phaxio ────────────────────────────────────────────────────────
+  const target = PHAXIO + url.pathname + url.search;
 
-    // Attach body for non-GET requests (file uploads, form posts)
-    if (!["GET", "HEAD"].includes(request.method)) {
-      init.body = request.body;
-    }
+  // Copy headers, drop host
+  const headers = {};
+  for (const [key, val] of request.headers.entries()) {
+    if (key !== "host") headers[key] = val;
+  }
 
-    const resp = await fetch(upstream, init);
+  // Read body as buffer so it can be forwarded cleanly
+  let body = null;
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    body = await request.arrayBuffer();
+  }
 
-    // Rebuild response with CORS headers added
-    const body    = await resp.arrayBuffer();
-    const outHdrs = new Headers(resp.headers);
-    for (const [k, v] of Object.entries(CORS_HEADERS)) outHdrs.set(k, v);
+  const upstream = await fetch(target, {
+    method:  request.method,
+    headers: headers,
+    body:    body,
+  });
 
-    return new Response(body, { status: resp.status, headers: outHdrs });
-  },
-};
+  // Copy response, add CORS headers
+  const resHeaders = {};
+  for (const [key, val] of upstream.headers.entries()) {
+    resHeaders[key] = val;
+  }
+  Object.assign(resHeaders, CORS);
+
+  const resBody = await upstream.arrayBuffer();
+
+  return new Response(resBody, {
+    status:  upstream.status,
+    headers: resHeaders,
+  });
+}
