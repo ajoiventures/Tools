@@ -140,6 +140,8 @@ textarea{min-height:90px;}
 .btn-sm{padding:8px 14px;font-size:13px;border-radius:10px;}
 .btn-row{display:flex;gap:10px;}
 .btn-row .btn{flex:1;}
+.crop-tools{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));}
+.crop-tools .btn{width:100%;padding-left:8px;padding-right:8px;}
 .info-box{background:#17160f;border:2px dashed var(--border);border-radius:var(--radius);padding:13px 15px;font-size:13px;color:var(--muted);line-height:1.6;}
 .info-box strong{color:var(--text);}
 .info-box a{color:var(--accent);text-decoration:none;}
@@ -265,6 +267,8 @@ footer{padding:8px 16px;text-align:center;font-size:11px;color:var(--muted);bord
   .thumb-strip img{height:44px;width:34px;}
   .btn-camera,.btn{padding:8px 8px;font-size:11px;}
   .btn-row{gap:6px;}
+  .crop-tools{grid-template-columns:repeat(3,minmax(0,1fr));}
+  .crop-tools .btn{font-size:10px;padding:7px 5px;}
   footer{display:none;}
 }
 
@@ -285,6 +289,7 @@ footer{padding:8px 16px;text-align:center;font-size:11px;color:var(--muted);bord
 .cam-capture:active{transform:scale(.87);}
 /* Adjust bar */
 .cam-adj-wrap{display:none;flex-direction:column;background:#000;flex-shrink:0;}
+.cam-scanner.simple-capture #cam-overlay,.cam-scanner.simple-capture .cam-adj-modes,.cam-scanner.simple-capture .cam-adj-tools{display:none!important;}
 .cam-adj-modes{display:flex;gap:8px;padding:10px 12px 4px;}
 .cam-mode-btn{flex:1;padding:8px 4px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);font-size:12px;font-weight:600;cursor:pointer;}
 .cam-mode-btn.active{background:#6c63ff;border-color:#6c63ff;color:#fff;}
@@ -544,6 +549,8 @@ footer{padding:8px 16px;text-align:center;font-size:11px;color:var(--muted);bord
     <div class="btn-row crop-tools">
       <button class="btn btn-ghost" onclick="autoFitAdjustCrop()">Auto fit</button>
       <button class="btn btn-ghost" onclick="fullPageAdjustCrop()">Full page</button>
+      <button class="btn btn-ghost" onclick="rotateAdjustPage(-90)">Rotate Left</button>
+      <button class="btn btn-ghost" onclick="rotateAdjustPage(90)">Rotate Right</button>
       <button class="btn btn-primary" onclick="applyAdjustCrop()">Apply Crop</button>
     </div>
     <div class="btn-row step-nav">
@@ -1052,14 +1059,11 @@ async function addFiles(files) {
   for (const file of Array.from(files)) {
     if (file.size > 20*1024*1024) { alert(`${file.name} too large`); continue; }
     const idx = pages.length;
-    pages.push({ blob:null, url:URL.createObjectURL(file), processing:true });
+    pages.push({ blob:file, url:URL.createObjectURL(file), processing:false });
     renderGrid();
-    msg.textContent = `Processing page ${idx+1}…`;
-    const blob = await processImage(file);
-    URL.revokeObjectURL(pages[idx].url);
-    pages[idx] = { blob, url:URL.createObjectURL(blob), processing:false };
-    dbSavePage(idx, blob);
-    if (CFG.autosave) downloadPage(blob, idx+1);
+    msg.textContent = `Added page ${idx+1}`;
+    dbSavePage(idx, file);
+    if (CFG.autosave) downloadPage(file, idx+1);
     renderGrid();
   }
   banner.classList.remove('show');
@@ -1250,6 +1254,31 @@ function fullPageAdjustCrop() {
   drawAdjustCrop();
 }
 
+async function rotateAdjustPage(deg) {
+  const pg=pages[currentAdjustIndex];
+  if(!pg || pg.blob?.type==='application/pdf') return;
+  const src=await blobToCanvas(pg.blob);
+  const turn=((deg%360)+360)%360;
+  const sideways=turn===90||turn===270;
+  const out=document.createElement('canvas');
+  out.width=sideways?src.height:src.width;
+  out.height=sideways?src.width:src.height;
+  const ctx=out.getContext('2d',{willReadFrequently:true});
+  ctx.translate(out.width/2,out.height/2);
+  ctx.rotate(deg*Math.PI/180);
+  ctx.drawImage(src,-src.width/2,-src.height/2);
+  const blob=await new Promise(res=>out.toBlob(res,'image/jpeg',parseFloat(CFG.quality)));
+  URL.revokeObjectURL(pg.url);
+  pages[currentAdjustIndex]={blob,url:URL.createObjectURL(blob),processing:false};
+  adjustCrop[currentAdjustIndex]={x:.025,y:.025,w:.95,h:.95};
+  dbSavePage(currentAdjustIndex,blob);
+  delete ocrCache[currentAdjustIndex];
+  renderGrid();
+  buildAdjustStrip();
+  selectAdjustPage(currentAdjustIndex);
+  showToast('Page rotated');
+}
+
 async function applyAdjustCrop(showToastMessage=true) {
   const pg=pages[currentAdjustIndex];
   const r=adjustCrop[currentAdjustIndex];
@@ -1333,6 +1362,12 @@ async function imageBlobInfo(blob) {
   });
 }
 
+async function imageBlobToJpeg(blob) {
+  if(blob.type === 'image/jpeg' || blob.type === 'image/jpg') return blob;
+  const src = await blobToCanvas(blob);
+  return new Promise(res => src.toBlob(res,'image/jpeg',parseFloat(CFG.quality)));
+}
+
 function bytesFromAscii(s) {
   return new TextEncoder().encode(s);
 }
@@ -1346,6 +1381,7 @@ function concatBytes(parts) {
 }
 
 async function imagesToPdfBlob(imageBlobs) {
+  imageBlobs = await Promise.all(imageBlobs.map(imageBlobToJpeg));
   const pageW = 612, pageH = 792, margin = 24;
   const infos = [];
   for(const blob of imageBlobs) infos.push(await imageBlobInfo(blob));
@@ -1522,6 +1558,7 @@ function closeCamera() {
   camPhoto.style.display='none'; camPhoto.src='';
   camOverlay.style.display='none';
   camToolbar.style.display='flex'; camAdjWrap.style.display='none';
+  camScanner.classList.remove('simple-capture');
   if(camPhotoUrl){ URL.revokeObjectURL(camPhotoUrl); camPhotoUrl=null; }
   document.getElementById('cam-status').textContent='Tap button to capture';
 }
@@ -1533,7 +1570,7 @@ function camCapture() {
   const full = document.createElement('canvas');
   full.width = camVideo.videoWidth; full.height = camVideo.videoHeight;
   full.getContext('2d').drawImage(camVideo, 0, 0);
-  camSnap = full; // kept for warp
+  camSnap = full;
   camVideo.pause(); camVideo.style.display='none';
 
   // Display via <img> — browser scales natively, zero degradation
@@ -1543,18 +1580,9 @@ function camCapture() {
     camPhoto.src = camPhotoUrl;
     camPhoto.style.display = 'block';
   }, 'image/jpeg', 0.97);
-
-  // Overlay canvas sized to display (CSS pixels only — no pixel data here)
-  const W = camVideo.clientWidth, H = camVideo.clientHeight;
-  camOverlay.width = W; camOverlay.height = H;
-  camOverlay.style.display = 'block';
-  setFullPageCorners();
-  autoFitCameraCorners(false);
-  camMode='color'; setMode('color');
+  camScanner.classList.add('simple-capture');
   camToolbar.style.display='none'; camAdjWrap.style.display='flex';
-  document.getElementById('cam-status').textContent='Drag corners · pick mode · Add Page';
-  if(camRAF) cancelAnimationFrame(camRAF);
-  drawOverlay();
+  document.getElementById('cam-status').textContent='Add page or retake';
 }
 
 function camRetake() {
@@ -1565,6 +1593,7 @@ function camRetake() {
   camOverlay.style.display='none';
   if(camPhotoUrl){ URL.revokeObjectURL(camPhotoUrl); camPhotoUrl=null; }
   camToolbar.style.display='flex'; camAdjWrap.style.display='none';
+  camScanner.classList.remove('simple-capture');
   document.getElementById('cam-status').textContent='Tap button to capture';
   camVideo.play();
 }
@@ -1649,36 +1678,22 @@ function drawOverlay() {
 
 // ── Add page ──────────────────────────────────────────────────────────────────
 async function camUse() {
-  if(!camSnap||!camCorners) return;
-  // Map display corners → full-res coords (reverse the object-fit:cover transform)
-  const fullCorners=displayToFullCorners(camCorners);
+  if(!camSnap) return;
   const snapRef=camSnap;
   closeCamera();
   const banner=document.getElementById('proc-banner'), msg=document.getElementById('proc-msg');
-  banner.classList.add('show'); msg.textContent='Processing…';
-  await new Promise(requestAnimationFrame);
-  const prepared=prepareWarpSource(snapRef, fullCorners);
-  const warped=perspectiveWarp(prepared.canvas, prepared.corners);
-  const faxScale=Math.min(FAX_W/warped.width,FAX_H/warped.height);
-  const ow=Math.round(warped.width*faxScale), oh=Math.round(warped.height*faxScale);
-  const out=document.getElementById('proc-canvas');
-  out.width=ow; out.height=oh;
-  const ctx=out.getContext('2d',{willReadFrequently:true});
-  ctx.drawImage(warped,0,0,ow,oh);
-  if(camMode==='bw') applyAdaptiveBW(ctx,ow,oh);
-  else if(camMode==='enhance') applyAutoLevels(ctx,ow,oh);
-  out.toBlob(blob=>{
+  banner.classList.add('show'); msg.textContent='Adding page...';
+  snapRef.toBlob(blob=>{
     const idx=pages.length;
     pages.push({blob,url:URL.createObjectURL(blob),processing:false});
     dbSavePage(idx,blob);
     if(CFG.autosave) downloadPage(blob,idx+1);
     renderGrid();
     banner.classList.remove('show');
-    showToast('Page added ✓');
-  },'image/jpeg',parseFloat(CFG.quality));
+    showToast('Page added');
+  },'image/jpeg',.95);
 }
-
-// ── Corner dragging ───────────────────────────────────────────────────────────
+// -- Corner dragging ───────────────────────────────────────────────────────────
 function evtPos(e){
   const r=camOverlay.getBoundingClientRect();
   return clampCamPoint([e.clientX-r.left, e.clientY-r.top]);
