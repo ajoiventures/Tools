@@ -165,53 +165,57 @@ textarea{min-height:90px;}
 
 footer{padding:12px 16px;text-align:center;font-size:11px;color:var(--muted);border-top:1px solid var(--border);}
 
-/* ── Live Camera Scanner ── */
-.cam-scanner{position:fixed;inset:0;background:#000;z-index:300;display:none;flex-direction:column;}
+/* ── Camera Scanner ── */
+.cam-scanner{position:fixed;inset:0;background:#111;z-index:300;display:none;flex-direction:column;}
 .cam-scanner.open{display:flex;}
-.cam-video-wrap{position:relative;flex:1;overflow:hidden;display:flex;align-items:center;justify-content:center;}
-#cam-video{width:100%;height:100%;object-fit:cover;}
-#cam-overlay{position:absolute;inset:0;width:100%;height:100%;touch-action:none;}
-.cam-top-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:rgba(0,0,0,.78);flex-shrink:0;}
+.cam-top-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#000;flex-shrink:0;}
 .cam-close{background:none;border:none;color:#fff;font-size:24px;cursor:pointer;padding:4px 8px;line-height:1;}
-#cam-status{color:rgba(255,255,255,.88);font-size:13px;font-weight:600;letter-spacing:.01em;}
-.cam-toolbar{display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.78);flex-shrink:0;}
-.cam-capture{width:70px;height:70px;border-radius:50%;background:transparent;border:4px solid #fff;cursor:pointer;position:relative;flex-shrink:0;transition:transform .12s;padding:0;}
-.cam-capture::after{content:'';position:absolute;inset:5px;border-radius:50%;background:#fff;transition:background .12s;}
-.cam-capture:active{transform:scale(.88);}
-.cam-capture:active::after{background:#ddd;}
-.cam-countdown-wrap{height:5px;background:rgba(255,255,255,.12);flex-shrink:0;display:none;}
-.cam-countdown-bar{height:100%;width:0;background:#fbbf24;}
-.cam-adjust-bar{display:none;align-items:center;justify-content:space-between;padding:14px 18px;background:rgba(0,0,0,.88);flex-shrink:0;gap:10px;}
-.cam-adj-btn{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.28);color:#fff;border-radius:99px;padding:10px 22px;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s;}
-.cam-adj-btn:active{background:rgba(255,255,255,.28);}
-.cam-adj-use{background:#6c63ff;border-color:#6c63ff;}
-.cam-adj-use:active{background:#574fd6;}
-.cam-adj-hint{color:rgba(255,255,255,.5);font-size:12px;flex:1;text-align:center;}
+#cam-status{color:rgba(255,255,255,.8);font-size:13px;}
+.cam-video-wrap{position:relative;flex:1;overflow:hidden;}
+#cam-video{width:100%;height:100%;object-fit:cover;display:block;}
+#cam-overlay{position:absolute;inset:0;width:100%;height:100%;touch-action:none;}
+/* Live view toolbar */
+.cam-toolbar{display:flex;align-items:center;justify-content:center;padding:20px 16px;background:#000;flex-shrink:0;}
+.cam-capture{width:68px;height:68px;border-radius:50%;background:transparent;border:4px solid #fff;cursor:pointer;position:relative;padding:0;transition:transform .1s;}
+.cam-capture::after{content:'';position:absolute;inset:5px;border-radius:50%;background:#fff;}
+.cam-capture:active{transform:scale(.87);}
+/* Adjust bar */
+.cam-adj-wrap{display:none;flex-direction:column;background:#000;flex-shrink:0;}
+.cam-adj-modes{display:flex;gap:8px;padding:10px 12px 4px;}
+.cam-mode-btn{flex:1;padding:8px 4px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);font-size:12px;font-weight:600;cursor:pointer;transition:background .12s,color .12s;}
+.cam-mode-btn.active{background:#6c63ff;border-color:#6c63ff;color:#fff;}
+.cam-adj-actions{display:flex;gap:8px;padding:8px 12px 14px;}
+.cam-retake-btn{flex:1;padding:11px;border-radius:10px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:14px;font-weight:600;cursor:pointer;}
+.cam-use-btn{flex:2;padding:11px;border-radius:10px;background:#6c63ff;border:none;color:#fff;font-size:14px;font-weight:700;cursor:pointer;}
+.cam-use-btn:active{background:#574fd6;}
 </style>
 </head>
 <body>
 
-<!-- ══════════════════ LIVE CAMERA SCANNER ══════════════════ -->
+<!-- ══════════════════ CAMERA SCANNER ══════════════════ -->
 <div class="cam-scanner" id="cam-scanner">
   <div class="cam-top-bar">
     <button class="cam-close" onclick="closeCamera()">✕</button>
-    <span id="cam-status">Point camera at document</span>
+    <span id="cam-status">Tap button to capture</span>
     <div style="width:40px"></div>
   </div>
   <div class="cam-video-wrap">
     <video id="cam-video" autoplay playsinline muted></video>
     <canvas id="cam-overlay"></canvas>
   </div>
-  <div class="cam-countdown-wrap" id="cam-countdown-wrap">
-    <div class="cam-countdown-bar" id="cam-countdown-bar"></div>
-  </div>
   <div class="cam-toolbar" id="cam-toolbar">
-    <button class="cam-capture" onclick="manualCapture()" title="Capture"></button>
+    <button class="cam-capture" onclick="camCapture()" title="Capture"></button>
   </div>
-  <div class="cam-adjust-bar" id="cam-adjust-bar">
-    <button class="cam-adj-btn" onclick="retakePhoto()">↩ Retake</button>
-    <span class="cam-adj-hint">Drag corners to adjust</span>
-    <button class="cam-adj-btn cam-adj-use" onclick="usePhoto()">Use ✓</button>
+  <div class="cam-adj-wrap" id="cam-adj-wrap">
+    <div class="cam-adj-modes">
+      <button class="cam-mode-btn active" id="mode-color" onclick="setMode('color')">Color</button>
+      <button class="cam-mode-btn" id="mode-bw" onclick="setMode('bw')">B&amp;W</button>
+      <button class="cam-mode-btn" id="mode-enhance" onclick="setMode('enhance')">Enhance</button>
+    </div>
+    <div class="cam-adj-actions">
+      <button class="cam-retake-btn" onclick="camRetake()">↩ Retake</button>
+      <button class="cam-use-btn" onclick="camUse()">Add Page ✓</button>
+    </div>
   </div>
 </div>
 
@@ -1063,22 +1067,16 @@ window.addEventListener('load', () => {
   }
 });
 
-// ── Live Camera Scanner (Pro) ─────────────────────────────────────────────────
-let camStream=null, camState='idle', camSnapshot=null;
-let camCorners=null, camDragging=-1;
-let stabilityHistory=[], lockTimer=null, scanTimer=null, camRAF=null;
+// ── Camera Scanner ────────────────────────────────────────────────────────────
+let camStream=null, camSnap=null, camCorners=null, camDrag=-1, camRAF=null, camMode='color';
 
-const camScanner   = document.getElementById('cam-scanner');
-const camVideo     = document.getElementById('cam-video');
-const camCanvas    = document.getElementById('cam-overlay');
-const camCtx       = camCanvas.getContext('2d');
-const camCdownWrap = document.getElementById('cam-countdown-wrap');
-const camCdownBar  = document.getElementById('cam-countdown-bar');
-const camToolbar   = document.getElementById('cam-toolbar');
-const camAdjBar    = document.getElementById('cam-adjust-bar');
-const camStatusEl  = document.getElementById('cam-status');
+const camScanner = document.getElementById('cam-scanner');
+const camVideo   = document.getElementById('cam-video');
+const camCanvas  = document.getElementById('cam-overlay');
+const camCtx     = camCanvas.getContext('2d');
+const camToolbar = document.getElementById('cam-toolbar');
+const camAdjWrap = document.getElementById('cam-adj-wrap');
 
-// ── Open / close ──────────────────────────────────────────────────────────────
 async function openCamera() {
   try {
     camStream = await navigator.mediaDevices.getUserMedia({
@@ -1089,7 +1087,7 @@ async function openCamera() {
     camScanner.classList.add('open');
     document.body.style.overflow = 'hidden';
     camVideo.addEventListener('loadedmetadata', () => {
-      resizeCamCanvas(); enterScanning();
+      camCanvas.width=camVideo.clientWidth; camCanvas.height=camVideo.clientHeight;
     }, { once:true });
   } catch(e) {
     document.getElementById('camera-input').click();
@@ -1098,149 +1096,83 @@ async function openCamera() {
 
 function closeCamera() {
   if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream=null; }
-  stopScanLoop(); stopAdjustLoop(); clearLockTimer();
+  if(camRAF){ cancelAnimationFrame(camRAF); camRAF=null; }
   camScanner.classList.remove('open');
-  document.body.style.overflow = '';
-  camState='idle'; camSnapshot=null; camCorners=null;
-  stabilityHistory=[]; camDragging=-1;
+  document.body.style.overflow='';
+  camSnap=null; camCorners=null; camDrag=-1;
+  camToolbar.style.display='flex'; camAdjWrap.style.display='none';
 }
 
-function resizeCamCanvas() {
-  camCanvas.width  = camVideo.clientWidth  || camVideo.offsetWidth;
-  camCanvas.height = camVideo.clientHeight || camVideo.offsetHeight;
+// ── Capture ───────────────────────────────────────────────────────────────────
+function camCapture() {
+  if(!camVideo.videoWidth) return;
+  camSnap = document.createElement('canvas');
+  camSnap.width=camVideo.videoWidth; camSnap.height=camVideo.videoHeight;
+  camSnap.getContext('2d').drawImage(camVideo,0,0);
+  camVideo.pause();
+  // Default corners = full image
+  const w=camCanvas.width, h=camCanvas.height;
+  const pad=Math.round(Math.min(w,h)*.04);
+  camCorners=[[pad,pad],[w-pad,pad],[w-pad,h-pad],[pad,h-pad]];
+  camMode='color'; setMode('color',true);
+  camToolbar.style.display='none'; camAdjWrap.style.display='flex';
+  document.getElementById('cam-status').textContent='Drag corners · pick mode · Add Page';
+  if(camRAF) cancelAnimationFrame(camRAF);
+  drawAdjust();
 }
-window.addEventListener('resize', ()=>{ if(camState!=='idle') resizeCamCanvas(); });
 
-// ── States ────────────────────────────────────────────────────────────────────
-function enterScanning() {
-  camState='scanning';
-  camCdownWrap.style.display='none'; camCdownBar.style.width='0%';
-  camToolbar.style.display='flex'; camAdjBar.style.display='none';
-  camStatusEl.textContent='Point camera at document';
-  stabilityHistory=[]; clearLockTimer();
-  camSnapshot=null;
+function camRetake() {
+  if(camRAF){ cancelAnimationFrame(camRAF); camRAF=null; }
+  camSnap=null; camCorners=null;
+  camToolbar.style.display='flex'; camAdjWrap.style.display='none';
+  document.getElementById('cam-status').textContent='Tap button to capture';
   camVideo.play();
-  stopAdjustLoop(); startScanLoop();
 }
 
-function enterLocking() {
-  camState='locking';
-  camStatusEl.textContent='Hold steady…';
-  camCdownWrap.style.display='block';
-  startLockCountdown();
+// ── Mode picker ───────────────────────────────────────────────────────────────
+function setMode(m, silent) {
+  camMode=m;
+  ['color','bw','enhance'].forEach(id=>{
+    document.getElementById('mode-'+id).classList.toggle('active', id===m);
+  });
 }
 
-function enterAdjusting(snap, vidCorners) {
-  camState='adjusting';
-  stopScanLoop(); clearLockTimer();
-  camSnapshot=snap; camVideo.pause();
-  const vw=snap.width,vh=snap.height,dw=camCanvas.width,dh=camCanvas.height;
-  camCorners=vidCorners.map(([x,y])=>[x/vw*dw, y/vh*dh]);
-  camToolbar.style.display='none'; camAdjBar.style.display='flex';
-  camCdownWrap.style.display='none';
-  camStatusEl.textContent='Adjust corners → Use ✓';
-  startAdjustLoop();
+// ── Draw adjustment view ──────────────────────────────────────────────────────
+function drawAdjust() {
+  if(!camSnap||!camCorners) return;
+  const dw=camCanvas.width, dh=camCanvas.height;
+  camCtx.drawImage(camSnap,0,0,dw,dh);
+  // Quad
+  const[tl,tr,br,bl]=camCorners;
+  camCtx.beginPath(); camCtx.moveTo(...tl);camCtx.lineTo(...tr);camCtx.lineTo(...br);camCtx.lineTo(...bl); camCtx.closePath();
+  camCtx.globalAlpha=.15; camCtx.fillStyle='#fff'; camCtx.fill(); camCtx.globalAlpha=1;
+  camCtx.strokeStyle='#fff'; camCtx.lineWidth=2; camCtx.setLineDash([]); camCtx.stroke();
+  // Handles
+  camCorners.forEach(([x,y])=>{
+    camCtx.beginPath(); camCtx.arc(x,y,18,0,Math.PI*2); camCtx.fillStyle='rgba(0,0,0,.4)'; camCtx.fill();
+    camCtx.beginPath(); camCtx.arc(x,y,18,0,Math.PI*2); camCtx.strokeStyle='#fff'; camCtx.lineWidth=2.5; camCtx.stroke();
+    camCtx.beginPath(); camCtx.arc(x,y,5,0,Math.PI*2);  camCtx.fillStyle='#fff'; camCtx.fill();
+  });
+  camRAF=requestAnimationFrame(drawAdjust);
 }
 
-// ── Scan loop ─────────────────────────────────────────────────────────────────
-function startScanLoop(){ if(!scanTimer) runScanFrame(); }
-function stopScanLoop() { if(scanTimer){ clearTimeout(scanTimer); scanTimer=null; } }
-
-function runScanFrame() {
-  scanTimer=null;
-  if(camState!=='scanning' && camState!=='locking') return;
-  if(!camVideo.videoWidth){ scanTimer=setTimeout(runScanFrame,120); return; }
-  const snap=document.createElement('canvas');
-  snap.width=camVideo.videoWidth; snap.height=camVideo.videoHeight;
-  snap.getContext('2d').drawImage(camVideo,0,0);
-  const corners=detectDocumentCorners(snap);
-  const vw=snap.width,vh=snap.height,dw=camCanvas.width,dh=camCanvas.height;
-  const oc=corners.map(([x,y])=>[x/vw*dw,y/vh*dh]);
-  const confident=isConfident(corners,vw,vh);
-  if(confident && isStable(corners)){
-    if(camState==='scanning') enterLocking();
-  } else {
-    if(camState==='locking'){
-      clearLockTimer(); camState='scanning';
-      camCdownWrap.style.display='none'; camCdownBar.style.width='0%';
-      camStatusEl.textContent='Point camera at document';
-      stabilityHistory=[];
-    }
-  }
-  camCorners=oc;
-  drawScanOverlay(oc, confident);
-  scanTimer=setTimeout(runScanFrame, 360);
-}
-
-function isConfident(corners,vw,vh){
-  const[tl,tr,br,bl]=corners;
-  const a=Math.abs((tr[0]-tl[0])*(br[1]-tl[1])-(br[0]-tl[0])*(tr[1]-tl[1]))/2
-         +Math.abs((br[0]-tl[0])*(bl[1]-tl[1])-(bl[0]-tl[0])*(br[1]-tl[1]))/2;
-  return a/(vw*vh)>0.15;
-}
-
-function isStable(corners){
-  stabilityHistory.push(corners.map(c=>[...c]));
-  if(stabilityHistory.length>8) stabilityHistory.shift();
-  if(stabilityHistory.length<5) return false;
-  const ref=stabilityHistory[0];
-  return stabilityHistory.every(h=>h.every(([x,y],i)=>Math.hypot(x-ref[i][0],y-ref[i][1])<22));
-}
-
-// ── Auto-snap countdown ───────────────────────────────────────────────────────
-const LOCK_MS=1600;
-function startLockCountdown(){
-  const start=Date.now();
-  function tick(){
-    const p=Math.min((Date.now()-start)/LOCK_MS,1);
-    camCdownBar.style.width=(p*100)+'%';
-    if(p>=1){ triggerSnap(); } else { lockTimer=requestAnimationFrame(tick); }
-  }
-  lockTimer=requestAnimationFrame(tick);
-}
-function clearLockTimer(){ if(lockTimer){cancelAnimationFrame(lockTimer);lockTimer=null;} }
-
-function triggerSnap(){
-  // White flash
-  camCtx.fillStyle='rgba(255,255,255,.75)';
-  camCtx.fillRect(0,0,camCanvas.width,camCanvas.height);
-  setTimeout(doSnap, 100);
-}
-function doSnap(){
-  if(!camVideo.videoWidth) return;
-  const snap=document.createElement('canvas');
-  snap.width=camVideo.videoWidth; snap.height=camVideo.videoHeight;
-  snap.getContext('2d').drawImage(camVideo,0,0);
-  enterAdjusting(snap, detectDocumentCorners(snap));
-}
-
-// ── Manual capture ────────────────────────────────────────────────────────────
-function manualCapture(){
-  if(!camVideo.videoWidth) return;
-  const snap=document.createElement('canvas');
-  snap.width=camVideo.videoWidth; snap.height=camVideo.videoHeight;
-  snap.getContext('2d').drawImage(camVideo,0,0);
-  enterAdjusting(snap, detectDocumentCorners(snap));
-}
-
-// ── Retake / Use ──────────────────────────────────────────────────────────────
-function retakePhoto(){ stopAdjustLoop(); enterScanning(); }
-
-async function usePhoto(){
-  if(!camSnapshot||!camCorners) return;
-  const vw=camSnapshot.width,vh=camSnapshot.height,dw=camCanvas.width,dh=camCanvas.height;
+// ── Add page ──────────────────────────────────────────────────────────────────
+async function camUse() {
+  if(!camSnap||!camCorners) return;
+  const vw=camSnap.width, vh=camSnap.height, dw=camCanvas.width, dh=camCanvas.height;
   const vidCorners=camCorners.map(([x,y])=>[x/dw*vw, y/dh*vh]);
   closeCamera();
   const banner=document.getElementById('proc-banner'), msg=document.getElementById('proc-msg');
-  banner.classList.add('show'); msg.textContent='Flattening document…';
-  const warped=perspectiveWarp(camSnapshot,vidCorners);
+  banner.classList.add('show'); msg.textContent='Processing…';
+  const warped=perspectiveWarp(camSnap,vidCorners);
   const scale=Math.min(FAX_W/warped.width,FAX_H/warped.height);
   const ow=Math.round(warped.width*scale), oh=Math.round(warped.height*scale);
   const out=document.getElementById('proc-canvas');
   out.width=ow; out.height=oh;
   const ctx=out.getContext('2d');
   ctx.drawImage(warped,0,0,ow,oh);
-  if(CFG.bw) applyAdaptiveBW(ctx,ow,oh); else applyAutoLevels(ctx,ow,oh);
+  if(camMode==='bw') applyAdaptiveBW(ctx,ow,oh);
+  else if(camMode==='enhance') applyAutoLevels(ctx,ow,oh);
   out.toBlob(blob=>{
     const idx=pages.length;
     pages.push({blob,url:URL.createObjectURL(blob),processing:false});
@@ -1252,65 +1184,23 @@ async function usePhoto(){
   },'image/jpeg',parseFloat(CFG.quality));
 }
 
-// ── Overlay drawing ───────────────────────────────────────────────────────────
-function drawScanOverlay(corners, found){
-  camCtx.clearRect(0,0,camCanvas.width,camCanvas.height);
-  if(!corners||!found){
-    const p=44,w=camCanvas.width,h=camCanvas.height;
-    camCtx.strokeStyle='rgba(255,255,255,.2)'; camCtx.lineWidth=1.5; camCtx.setLineDash([8,8]);
-    camCtx.strokeRect(p,p,w-p*2,h-p*2); camCtx.setLineDash([]);
-    return;
-  }
-  drawQuad(corners, camState==='locking'?'#fbbf24':'#6c63ff');
-}
-
-function drawAdjustOverlay(){
-  if(!camSnapshot||!camCorners) return;
-  camCtx.drawImage(camSnapshot,0,0,camCanvas.width,camCanvas.height);
-  drawQuad(camCorners,'#4ade80');
-}
-
-function drawQuad(corners,color){
-  const[tl,tr,br,bl]=corners;
-  camCtx.beginPath();
-  camCtx.moveTo(...tl);camCtx.lineTo(...tr);camCtx.lineTo(...br);camCtx.lineTo(...bl);
-  camCtx.closePath();
-  camCtx.globalAlpha=.18; camCtx.fillStyle=color; camCtx.fill(); camCtx.globalAlpha=1;
-  camCtx.strokeStyle=color; camCtx.lineWidth=2.5; camCtx.setLineDash([]); camCtx.stroke();
-  corners.forEach(([x,y],i)=>{
-    camCtx.beginPath(); camCtx.arc(x,y,16,0,Math.PI*2); camCtx.fillStyle=color; camCtx.fill();
-    camCtx.beginPath(); camCtx.arc(x,y,7,0,Math.PI*2);  camCtx.fillStyle='#fff'; camCtx.fill();
-    const sx=(i===0||i===3)?1:-1, sy=(i===0||i===1)?1:-1;
-    camCtx.strokeStyle='#fff'; camCtx.lineWidth=3; camCtx.lineCap='round';
-    camCtx.beginPath(); camCtx.moveTo(x+sx*22,y); camCtx.lineTo(x,y); camCtx.lineTo(x,y+sy*22); camCtx.stroke();
-  });
-}
-
-function startAdjustLoop(){ if(!camRAF) adjustTick(); }
-function stopAdjustLoop() { if(camRAF){cancelAnimationFrame(camRAF);camRAF=null;} }
-function adjustTick(){
-  if(camState!=='adjusting'){camRAF=null;return;}
-  drawAdjustOverlay();
-  camRAF=requestAnimationFrame(adjustTick);
-}
-
 // ── Corner dragging ───────────────────────────────────────────────────────────
 function evtPos(e){
-  const r=camCanvas.getBoundingClientRect(),s=e.touches?e.touches[0]:e;
-  return [s.clientX-r.left,s.clientY-r.top];
+  const r=camCanvas.getBoundingClientRect(), s=e.touches?e.touches[0]:e;
+  return [s.clientX-r.left, s.clientY-r.top];
 }
 function nearestCorner(p){
   if(!camCorners) return -1;
-  let best=-1,bestD=52;
-  camCorners.forEach(([cx,cy],i)=>{const d=Math.hypot(p[0]-cx,p[1]-cy);if(d<bestD){bestD=d;best=i;}});
+  let best=-1, bestD=60;
+  camCorners.forEach(([cx,cy],i)=>{ const d=Math.hypot(p[0]-cx,p[1]-cy); if(d<bestD){bestD=d;best=i;} });
   return best;
 }
-camCanvas.addEventListener('touchstart',e=>{e.preventDefault();camDragging=nearestCorner(evtPos(e));},{passive:false});
-camCanvas.addEventListener('touchmove', e=>{e.preventDefault();if(camDragging>=0)camCorners[camDragging]=evtPos(e);},{passive:false});
-camCanvas.addEventListener('touchend',  ()=>{camDragging=-1;});
-camCanvas.addEventListener('mousedown', e=>{camDragging=nearestCorner(evtPos(e));});
-camCanvas.addEventListener('mousemove', e=>{if(camDragging>=0)camCorners[camDragging]=evtPos(e);});
-camCanvas.addEventListener('mouseup',   ()=>{camDragging=-1;});
+camCanvas.addEventListener('touchstart',e=>{e.preventDefault();camDrag=nearestCorner(evtPos(e));},{passive:false});
+camCanvas.addEventListener('touchmove', e=>{e.preventDefault();if(camDrag>=0)camCorners[camDrag]=evtPos(e);},{passive:false});
+camCanvas.addEventListener('touchend',  ()=>{camDrag=-1;});
+camCanvas.addEventListener('mousedown', e=>{camDrag=nearestCorner(evtPos(e));});
+camCanvas.addEventListener('mousemove', e=>{if(camDrag>=0)camCorners[camDrag]=evtPos(e);});
+camCanvas.addEventListener('mouseup',   ()=>{camDrag=-1;});
 </script>
 </body>
 </html>
