@@ -48,8 +48,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 /* STACKED CARD BODY */
 .card-body{display:flex;flex-direction:column}
 
-.photo-col{display:none}
-.tree-photo{width:100%;height:auto;display:block}
+.photo-col{overflow:hidden;height:380px;border-bottom:1px solid #ddd8d0}
+.tree-photo{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
 
 .info-col{padding:18px;display:flex;flex-direction:column;gap:12px}
 .section-eyebrow{font-size:9px;font-weight:700;letter-spacing:1.2px;color:#8D6E63;text-transform:uppercase}
