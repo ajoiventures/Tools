@@ -45,13 +45,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .card-loc{font-size:12px;color:#6b7280;margin-top:2px}
 .urgency-pill{font-size:10px;font-weight:700;letter-spacing:.8px;padding:4px 10px;border-radius:100px;flex-shrink:0}
 
-/* TWO-COLUMN CARD BODY */
-.card-body{display:grid;grid-template-columns:1fr 1.15fr}
-@media(max-width:560px){.card-body{grid-template-columns:1fr}}
+/* STACKED CARD BODY */
+.card-body{display:flex;flex-direction:column}
 
-.photo-col{background:#111;border-right:1px solid #ddd8d0;overflow:hidden;max-height:460px;display:flex;align-items:flex-start}
-@media(max-width:560px){.photo-col{border-right:none;border-bottom:1px solid #ddd8d0;max-height:280px}}
-.tree-photo{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
+.photo-col{background:#111;border-bottom:1px solid #ddd8d0;overflow:hidden}
+.tree-photo{width:100%;height:auto;display:block}
 
 .info-col{padding:18px;display:flex;flex-direction:column;gap:12px}
 .section-eyebrow{font-size:9px;font-weight:700;letter-spacing:1.2px;color:#8D6E63;text-transform:uppercase}
