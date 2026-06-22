@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Work Authorization — Word of Mouth Tree Service</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F5F3EF;color:#1a1a1a;font-size:15px}
+
+  .page{max-width:780px;margin:32px auto;padding:0 16px 64px}
+
+  /* Header */
+  .doc-header{background:#fff;border:1px solid #ddd8d0;border-radius:14px;padding:28px 30px 24px;margin-bottom:24px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+  .doc-header-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;margin-bottom:20px}
+  .doc-title{font-size:22px;font-weight:700;color:#1a1a1a}
+  .doc-subtitle{font-size:13px;color:#6b7280;margin-top:3px}
+  .doc-badge{background:#166534;color:#fff;font-size:11px;font-weight:700;letter-spacing:.8px;padding:6px 14px;border-radius:100px}
+  .parties{display:grid;grid-template-columns:1fr 1fr;gap:20px;border-top:1px solid #e5e0d6;padding-top:18px}
+  @media(max-width:520px){.parties{grid-template-columns:1fr}}
+  .party-label{font-size:10px;font-weight:700;letter-spacing:1px;color:#8D6E63;text-transform:uppercase;margin-bottom:6px}
+  .party-name{font-size:14px;font-weight:600;margin-bottom:2px}
+  .party-detail{font-size:12px;color:#6b7280;line-height:1.7}
+
+  /* Summary bar */
+  .summary-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+  .sum-box{background:#fff;border:1px solid #ddd8d0;border-radius:10px;padding:14px 16px;text-align:center}
+  .sum-label{font-size:10px;font-weight:700;letter-spacing:.8px;color:#8D6E63;text-transform:uppercase;margin-bottom:4px}
+  .sum-val{font-size:18px;font-weight:700;color:#1a1a1a}
+  .sum-sub{font-size:11px;color:#6b7280;margin-top:2px}
+
+  /* Intro */
+  .intro-box{background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:14px 16px;margin-bottom:24px;font-size:13px;line-height:1.6;color:#1e40af}
+
+  /* Work items */
+  .section-title{font-size:11px;font-weight:700;letter-spacing:1px;color:#8D6E63;text-transform:uppercase;margin-bottom:12px}
+  .item-card{background:#fff;border:1px solid #ddd8d0;border-radius:12px;overflow:hidden;margin-bottom:16px;box-shadow:0 1px 6px rgba(0,0,0,.05)}
+  .item-header{background:linear-gradient(to right,#F8F4EF,#fff);border-bottom:1px solid #e5e0d6;padding:12px 16px;display:flex;align-items:center;gap:10px}
+  .item-num{width:30px;height:30px;border-radius:50%;background:#5C4033;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+  .item-title{font-size:15px;font-weight:700;flex:1}
+  .item-loc{font-size:11px;color:#6b7280}
+  .est-ref{font-size:10px;font-weight:700;background:#F0FDF4;color:#166534;border:1px solid #BBF7D0;padding:3px 9px;border-radius:100px;white-space:nowrap}
+  .item-body{display:grid;grid-template-columns:1fr 1.2fr}
+  @media(max-width:560px){.item-body{grid-template-columns:1fr}}
+  .item-photo{overflow:hidden;height:320px;background:#111;border-right:1px solid #ddd8d0}
+  @media(max-width:560px){.item-photo{border-right:none;border-bottom:1px solid #ddd8d0;height:240px}}
+  .item-photo img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
+  .item-info{padding:16px;display:flex;flex-direction:column;gap:10px}
+  .info-label{font-size:9px;font-weight:700;letter-spacing:1.2px;color:#8D6E63;text-transform:uppercase}
+  .info-text{font-size:13px;line-height:1.6;color:#374151}
+  .work-list{list-style:none;display:flex;flex-direction:column;gap:5px}
+  .work-list li{font-size:12px;font-weight:500;color:#14532D;background:#DCFCE7;border-radius:6px;padding:6px 10px 6px 26px;position:relative;line-height:1.4}
+  .work-list li::before{content:'✓';position:absolute;left:9px;top:6px;color:#166534;font-weight:700}
+  .auth-row{margin-top:auto;padding-top:10px;border-top:1px solid #f0ece5}
+  .auth-check{display:flex;align-items:center;gap:10px;cursor:pointer}
+  .auth-check input{width:18px;height:18px;accent-color:#166534;cursor:pointer}
+  .auth-check-label{font-size:13px;font-weight:600;color:#374151}
+
+  /* Totals */
+  .totals-card{background:#fff;border:1px solid #ddd8d0;border-radius:12px;padding:20px 24px;margin:24px 0}
+  .totals-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px;color:#374151;border-bottom:1px solid #f0ece5}
+  .totals-row:last-child{border-bottom:none}
+  .totals-row.total-line{font-size:17px;font-weight:700;color:#1a1a1a;padding-top:12px}
+  .totals-row.discount{color:#166534}
+
+  /* Signature */
+  .sig-card{background:#fff;border:1px solid #ddd8d0;border-radius:12px;padding:24px;margin-bottom:24px}
+  .sig-title{font-size:15px;font-weight:700;margin-bottom:6px}
+  .sig-text{font-size:13px;color:#6b7280;line-height:1.6;margin-bottom:20px}
+  .sig-grid{display:grid;grid-template-columns:2fr 1fr;gap:20px}
+  @media(max-width:480px){.sig-grid{grid-template-columns:1fr}}
+  .sig-field label{font-size:10px;font-weight:700;letter-spacing:.8px;color:#8D6E63;text-transform:uppercase;display:block;margin-bottom:6px}
+  .sig-field .sig-line{border:none;border-bottom:1.5px solid #5C4033;width:100%;padding:8px 4px;font-size:14px;background:transparent;outline:none;color:#1a1a1a}
+  .sig-field .sig-line::placeholder{color:#c0b8b0;font-size:13px}
+
+  /* Send button */
+  .send-btn{display:block;width:100%;padding:16px;background:#166534;color:#fff;font-size:15px;font-weight:700;border:none;border-radius:10px;cursor:pointer;text-align:center;letter-spacing:.3px}
+  .send-btn:hover{background:#14532D}
+
+  /* Terms note */
+  .terms-note{font-size:11px;color:#9ca3af;line-height:1.6;text-align:center;margin-top:16px;padding:0 8px}
+
+  @media print{
+    body{background:#fff}
+    .page{margin:0;padding:0}
+    .send-btn{display:none}
+    .auth-check input{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="doc-header">
+    <div class="doc-header-top">
+      <div>
+        <div class="doc-title">Work Authorization</div>
+        <div class="doc-subtitle">Estimates #2509 &amp; #2510 · Word of Mouth Tree Service</div>
+      </div>
+      <div class="doc-badge">PENDING SIGNATURE</div>
+    </div>
+    <div class="parties">
+      <div>
+        <div class="party-label">Authorized by</div>
+        <div class="party-name">Paul Irumudomon</div>
+        <div class="party-detail">2509 Ives Avenue<br>Orlando, FL 32806<br>(407) 717-0861</div>
+      </div>
+      <div>
+        <div class="party-label">Contractor</div>
+        <div class="party-name">Word of Mouth Tree Service</div>
+        <div class="party-detail">441 Baker Avenue<br>Altamonte Springs, FL 32714<br>(407) 862-9779<br>atollman.womtree@gmail.com</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary bar -->
+  <div class="summary-bar">
+    <div class="sum-box">
+      <div class="sum-label">Total Authorized</div>
+      <div class="sum-val">$3,000</div>
+      <div class="sum-sub">Estimates #2509 + #2510</div>
+    </div>
+    <div class="sum-box">
+      <div class="sum-label">Work Items</div>
+      <div class="sum-val">6</div>
+      <div class="sum-sub">Trees / services</div>
+    </div>
+    <div class="sum-box">
+      <div class="sum-label">Valid Until</div>
+      <div class="sum-val">Jul 17</div>
+      <div class="sum-sub">30 days from Jun 17, 2026</div>
+    </div>
+  </div>
+
+  <!-- Intro -->
+  <div class="intro-box">
+    By signing this document I authorize Word of Mouth Tree Service, Inc. to proceed with all six work items listed below, in accordance with Estimates #2509 and #2510 dated June 17, 2026, and all Terms &amp; Conditions stated therein. Total agreed price: <strong>$3,000.00</strong>. Payment due upon completion by check or ACH.
+  </div>
+
+  <!-- Work items -->
+  <div class="section-title">Authorized work scope</div>
+
+  <!-- Item 1 -->
+  <div class="item-card">
+    <div class="item-header">
+      <div class="item-num">01</div>
+      <div style="flex:1">
+        <div class="item-title">Fallen Palm — Front Driveway</div>
+        <div class="item-loc">📍 Front driveway</div>
+      </div>
+      <div class="est-ref">#2509</div>
+    </div>
+    <div class="item-body">
+      <div class="item-photo"><img src="photos/card_01.jpg" alt="Fallen palm tree in front driveway" loading="lazy"></div>
+      <div class="item-info">
+        <div>
+          <div class="info-label">Description</div>
+          <p class="info-text">Fallen/downed palm tree in the front driveway. Roots exposed, tree fully toppled.</p>
+        </div>
+        <div>
+          <div class="info-label">Work scope</div>
+          <ul class="work-list"><li>Remove downed palm from front yard</li><li>Full debris cleanup</li></ul>
+        </div>
+        <div class="auth-row">
+          <label class="auth-check"><input type="checkbox" checked> <span class="auth-check-label">Authorized ✓</span></label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Item 2 -->
+  <div class="item-card">
+    <div class="item-header">
+      <div class="item-num">02</div>
+      <div style="flex:1">
+        <div class="item-title">Camphor Tree — Front Yard</div>
+        <div class="item-loc">📍 Front yard</div>
+      </div>
+      <div class="est-ref">#2509</div>
+    </div>
+    <div class="item-body">
+      <div class="item-photo"><img src="photos/card_02.jpg" alt="Camphor tree in front yard" loading="lazy"></div>
+      <div class="item-info">
+        <div>
+          <div class="info-label">Description</div>
+          <p class="info-text">Large Camphor tree in the front yard. Marked branches and circled sucker growth throughout the canopy.</p>
+        </div>
+        <div>
+          <div class="info-label">Work scope</div>
+          <ul class="work-list"><li>Prune back marked Camphor limbs</li><li>Remove interior sucker growth and dead limbs</li></ul>
+        </div>
+        <div class="auth-row">
+          <label class="auth-check"><input type="checkbox" checked> <span class="auth-check-label">Authorized ✓</span></label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Item 3 -->
+  <div class="item-card">
+    <div class="item-header">
+      <div class="item-num">03</div>
+      <div style="flex:1">
+        <div class="item-title">Norfolk Pine Removal + Stump Grinding</div>
+        <div class="item-loc">📍 Backyard, left fence line</div>
+      </div>
+      <div class="est-ref">#2510</div>
+    </div>
+    <div class="item-body">
+      <div class="item-photo"><img src="photos/card_03.jpg" alt="Norfolk Pine in backyard" loading="lazy"></div>
+      <div class="item-info">
+        <div>
+          <div class="info-label">Description</div>
+          <p class="info-text">Norfolk Pine showing heavy browning along the left fence line. Full removal and stump grinding included.</p>
+        </div>
+        <div>
+          <div class="info-label">Work scope</div>
+          <ul class="work-list"><li>Complete removal of Norfolk Pine</li><li>Stump grinding to ground level</li><li>Full debris cleanup</li></ul>
+        </div>
+        <div class="auth-row">
+          <label class="auth-check"><input type="checkbox" checked> <span class="auth-check-label">Authorized ✓</span></label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Item 8 -->
+  <div class="item-card">
+    <div class="item-header">
+      <div class="item-num">08</div>
+      <div style="flex:1">
+        <div class="item-title">Cedar Tree — Right Side of House</div>
+        <div class="item-loc">📍 Right side yard</div>
+      </div>
+      <div class="est-ref">#2509</div>
+    </div>
+    <div class="item-body">
+      <div class="item-photo"><img src="photos/card_08.jpg" alt="Cedar tree right side yard" loading="lazy"></div>
+      <div class="item-info">
+        <div>
+          <div class="info-label">Description</div>
+          <p class="info-text">Cedar along the right side yard. Circled area marks dead lower limbs for removal.</p>
+        </div>
+        <div>
+          <div class="info-label">Work scope</div>
+          <ul class="work-list"><li>Remove dead limb on Cedar tree at the right side</li></ul>
+        </div>
+        <div class="auth-row">
+          <label class="auth-check"><input type="checkbox" checked> <span class="auth-check-label">Authorized ✓</span></label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Item 9 -->
+  <div class="item-card">
+    <div class="item-header">
+      <div class="item-num">09</div>
+      <div style="flex:1">
+        <div class="item-title">Front Right Oak Tree</div>
+        <div class="item-loc">📍 Front right side of house</div>
+      </div>
+      <div class="est-ref">#2509</div>
+    </div>
+    <div class="item-body">
+      <div class="item-photo"><img src="photos/card_09.jpg" alt="Front right oak tree" loading="lazy"></div>
+      <div class="item-info">
+        <div>
+          <div class="info-label">Description</div>
+          <p class="info-text">Laurel Oak at the front of the home. Canopy needs to be raised; lower hanging limbs circled.</p>
+        </div>
+        <div>
+          <div class="info-label">Work scope</div>
+          <ul class="work-list"><li>Raise canopy on Laurel oak at the front of the home</li><li>Remove lower hanging branches</li></ul>
+        </div>
+        <div class="auth-row">
+          <label class="auth-check"><input type="checkbox" checked> <span class="auth-check-label">Authorized ✓</span></label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Item 10 -->
+  <div class="item-card">
+    <div class="item-header">
+      <div class="item-num">10</div>
+      <div style="flex:1">
+        <div class="item-title">Backyard Oak Tree (Laurel Oak)</div>
+        <div class="item-loc">📍 Back left corner of house</div>
+      </div>
+      <div class="est-ref">#2509</div>
+    </div>
+    <div class="item-body">
+      <div class="item-photo"><img src="photos/card_10.jpg" alt="Backyard Laurel Oak tree" loading="lazy"></div>
+      <div class="item-info">
+        <div>
+          <div class="info-label">Description</div>
+          <p class="info-text">Large Laurel Oak at the back left corner. Lower hanging limbs and interior sucker growth circled for removal.</p>
+        </div>
+        <div>
+          <div class="info-label">Work scope</div>
+          <ul class="work-list"><li>Weight reduction pruning on Laurel oak</li><li>Remove lower hanging limbs around perimeter</li><li>Remove interior sucker growth for wind mitigation</li></ul>
+        </div>
+        <div class="auth-row">
+          <label class="auth-check"><input type="checkbox" checked> <span class="auth-check-label">Authorized ✓</span></label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Totals -->
+  <div class="totals-card">
+    <div class="totals-row"><span>Estimate #2509 — Pruning &amp; Palm removal (5 items)</span><span>$1,500.00</span></div>
+    <div class="totals-row"><span>Estimate #2510 — Norfolk Pine removal + stump grinding</span><span>$1,500.00</span></div>
+    <div class="totals-row total-line"><span>Total Authorized</span><span>$3,000.00</span></div>
+  </div>
+
+  <!-- Signature -->
+  <div class="sig-card">
+    <div class="sig-title">Authorization &amp; Signature</div>
+    <div class="sig-text">By signing below I confirm I have reviewed the full scope of work, all photos, and the Terms &amp; Conditions in Estimates #2509 and #2510, and authorize Word of Mouth Tree Service, Inc. to proceed. Payment of $3,000.00 is due upon completion by check (preferred) or ACH.</div>
+    <div class="sig-grid">
+      <div class="sig-field">
+        <label>Signature</label>
+        <input class="sig-line" type="text" placeholder="Sign here">
+      </div>
+      <div class="sig-field">
+        <label>Date</label>
+        <input class="sig-line" type="text" placeholder="MM / DD / YYYY">
+      </div>
+    </div>
+  </div>
+
+  <button class="send-btn" onclick="window.print()">Print / Save as PDF to send</button>
+  <p class="terms-note">This document authorizes work under the Terms &amp; Conditions of Estimates #2509 and #2510 issued June 17, 2026. This proposal is valid for 30 days. A mobilization fee of $250 applies if crew is dispatched and access is denied.</p>
+
+</div>
+</body>
+</html>
