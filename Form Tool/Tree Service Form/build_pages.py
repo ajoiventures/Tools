@@ -62,36 +62,71 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
 """
 
 # ─── WOM AUTHORIZATION ────────────────────────────────────────────────────────
+# status: 'quoted' = already in #2509/#2510, 'addon' = being added in $3,200 offer, 'tbd' = needs pricing
 
 wom_items = [
-    (1, 'Fallen Palm — Front Driveway', '📍 Front driveway', '#2509',
+    (1,  'Fallen Palm — Front Driveway',          '📍 Front driveway',              'quoted', '#2509',
      'Fallen/downed palm in the front driveway. Roots exposed, tree fully toppled.',
      ['Remove downed palm from front yard', 'Full debris cleanup']),
-    (2, 'Camphor Tree — Front Yard', '📍 Front yard', '#2509',
+    (2,  'Camphor Tree — Front Yard',             '📍 Front yard',                  'quoted', '#2509',
      'Large Camphor tree with marked branches and circled sucker growth throughout the canopy.',
      ['Prune back marked Camphor limbs', 'Remove interior sucker growth and dead limbs']),
-    (3, 'Norfolk Pine Removal + Stump Grinding', '📍 Backyard, left fence line', '#2510',
+    (3,  'Norfolk Pine Removal + Stump Grinding', '📍 Backyard, left fence line',   'quoted', '#2510',
      'Norfolk Pine heavily browned along the left fence line. Full removal plus stump grinding.',
      ['Complete removal of Norfolk Pine', 'Stump grinding to ground level', 'Full debris cleanup']),
-    (8, 'Cedar Tree — Right Side of House', '📍 Right side yard', '#2509',
+    (4,  'Small Dead Tree',                       '📍 Backyard, in front of Norfolk Pine', 'addon', 'Add-on',
+     'Small fully dead tree with no foliage directly in front of the Norfolk Pines. Circled for full removal.',
+     ['Full removal of small dead tree', 'Stump removal or grinding to ground level', 'Full debris cleanup']),
+    (5,  'Dead Yucca Palm',                       '📍 Front left corner of fence',  'addon', 'Add-on',
+     'Dead Yucca Palm in the front left fence corner. Circled for full removal including root and base.',
+     ['Full removal of dead Yucca Palm', 'Remove base and root to ground level']),
+    (6,  'Driveway Oak Overhang (Neighbor\'s)',   '📍 Front driveway edge',         'addon', 'Add-on',
+     "Limbs from neighbor's oak hang over the driveway. Trim to restore vehicle clearance.",
+     ["Trim overhanging oak limbs from neighbor's tree at driveway edge", 'Raise clearance to safe vehicle height']),
+    (7,  'Roadside Palm Debris Hauling',          '📍 Roadside / front of property','tbd',   'Price TBD',
+     'Pile of palm debris at the roadside left by a third party. Hauling only — no cutting involved.',
+     ['Haul and dispose of existing roadside palm debris pile']),
+    (8,  'Cedar Tree — Right Side of House',      '📍 Right side yard',             'quoted', '#2509',
      'Cedar along the right side yard. Circled dead lower limbs for removal.',
-     ['Remove dead limb on Cedar tree at the right side']),
-    (9, 'Front Right Oak Tree', '📍 Front right side of house', '#2509',
-     'Laurel Oak at the front of the home. Canopy to be raised; lower limbs circled.',
+     ['Remove dead lower limb on Cedar tree at the right side']),
+    (9,  'Front Right Oak Tree',                  '📍 Front right side of house',   'quoted', '#2509',
+     'Laurel Oak at the front of the home. Canopy to be raised; lower limbs and sucker growth circled.',
      ['Raise canopy on Laurel oak at the front of the home', 'Remove lower hanging branches']),
-    (10, 'Backyard Laurel Oak', '📍 Back left corner of house', '#2509',
+    (10, 'Backyard Laurel Oak',                   '📍 Back left corner of house',   'quoted', '#2509',
      'Large Laurel Oak at the back left corner. Lower hanging limbs and interior sucker growth circled.',
      ['Weight reduction pruning on Laurel oak', 'Remove lower hanging limbs around perimeter',
       'Remove interior sucker growth for wind mitigation']),
+    (11, 'Smaller Front-Left Fence Tree',         '📍 Front left side, behind fence', 'addon', 'Add-on',
+     'Smaller tree at the front left fence. Branches growing into fence; sucker growth creeping over panels.',
+     ['Trim branches growing into fence line', 'Remove sucker growth from fence perimeter']),
+    (12, 'Palm by the Pool',                      '📍 Backyard pool and patio',     'tbd',   'Price TBD',
+     'Palm tree beside the backyard pool and patio. Site visit needed to assess condition and scope.',
+     ['Assess palm condition and provide scope at site visit', 'Trim, remove, or prune per assessment']),
 ]
 
-def wom_card(num, title, loc, ref, desc, scope):
+STATUS_BADGE = {
+    'quoted': ('background:#DCFCE7;color:#166534;border:1px solid #BBF7D0', '&#10003; In Estimate'),
+    'addon':  ('background:#FEF3C7;color:#92400e;border:1px solid #FDE68A', '+ Add to Scope'),
+    'tbd':    ('background:#DBEAFE;color:#1d4ed8;border:1px solid #BFDBFE', '&#128203; Price Needed'),
+}
+
+def wom_card(num, title, loc, status, ref, desc, scope):
     items_html = ''.join(f'<li>{s}</li>' for s in scope)
+    badge_style, badge_label = STATUS_BADGE[status]
+    ref_style = 'background:#F0FDF4;color:#166534;border:1px solid #BBF7D0' if status == 'quoted' else \
+                'background:#FEF9C3;color:#78350f;border:1px solid #FDE68A' if status == 'addon' else \
+                'background:#EFF6FF;color:#1d4ed8;border:1px solid #BFDBFE'
+    checkbox = '<input type="checkbox" checked style="width:16px;height:16px;accent-color:#166534;margin-right:8px;vertical-align:middle">Authorized' \
+        if status == 'quoted' else \
+        '<input type="checkbox" style="width:16px;height:16px;accent-color:#92400e;margin-right:8px;vertical-align:middle"><span style="color:#92400e">Confirm add-on with WOM</span>' \
+        if status == 'addon' else \
+        '<input type="checkbox" style="width:16px;height:16px;accent-color:#1d4ed8;margin-right:8px;vertical-align:middle"><span style="color:#1d4ed8">Pending price from WOM</span>'
     return f'''<div class="item-card">
   <div class="item-header">
     <div class="item-num">{str(num).zfill(2)}</div>
     <div class="item-title">{title}</div>
-    <span style="font-size:10px;font-weight:700;background:#F0FDF4;color:#166534;border:1px solid #BBF7D0;padding:3px 9px;border-radius:100px">{ref}</span>
+    <span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:100px;{ref_style}">{ref}</span>
+    <span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:100px;{badge_style}">{badge_label}</span>
     <div class="item-loc">{loc}</div>
   </div>
   <div class="item-body">
@@ -99,9 +134,7 @@ def wom_card(num, title, loc, ref, desc, scope):
     <div class="item-info">
       <div><div class="info-lbl">Description</div><p class="info-txt">{desc}</p></div>
       <div><div class="info-lbl">Work scope</div><ul class="work-list">{items_html}</ul></div>
-      <div style="margin-top:auto;padding-top:10px;border-top:1px solid #f0ece5;font-size:13px;font-weight:600;color:#374151">
-        <input type="checkbox" checked style="width:16px;height:16px;accent-color:#166534;margin-right:8px;vertical-align:middle">Authorized &#10003;
-      </div>
+      <div style="margin-top:auto;padding-top:10px;border-top:1px solid #f0ece5;font-size:13px;font-weight:600;color:#374151">{checkbox}</div>
     </div>
   </div>
 </div>'''
@@ -125,15 +158,23 @@ wom_html = f'''<!DOCTYPE html>
 .p-lbl{{font-size:10px;font-weight:700;letter-spacing:1px;color:#8D6E63;text-transform:uppercase;margin-bottom:5px}}
 .p-name{{font-size:14px;font-weight:600;margin-bottom:2px}}
 .p-det{{font-size:12px;color:#6b7280;line-height:1.7}}
-.sum-row{{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}}
+.sum-row{{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}}
+@media(max-width:540px){{.sum-row{{grid-template-columns:repeat(2,1fr)}}}}
 .sum-box{{background:#fff;border:1px solid #ddd8d0;border-radius:10px;padding:12px 14px;text-align:center}}
+.sum-box.highlight{{border:2px solid #166534;background:#F0FDF4}}
 .sum-lbl{{font-size:10px;font-weight:700;letter-spacing:.8px;color:#8D6E63;text-transform:uppercase;margin-bottom:3px}}
 .sum-val{{font-size:18px;font-weight:700}}
 .sum-sub{{font-size:11px;color:#6b7280;margin-top:2px}}
-.intro{{background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:13px 16px;margin-bottom:20px;font-size:13px;line-height:1.6;color:#1e40af}}
+.offer-banner{{background:linear-gradient(135deg,#1a3a2a,#166534);color:#fff;border-radius:12px;padding:18px 22px;margin-bottom:20px}}
+.offer-banner h2{{font-size:16px;font-weight:700;margin-bottom:6px}}
+.offer-banner p{{font-size:13px;line-height:1.6;opacity:.9}}
+.offer-script{{background:rgba(255,255,255,.1);border-left:3px solid rgba(255,255,255,.4);border-radius:0 8px 8px 0;padding:11px 14px;margin-top:10px;font-size:13px;font-style:italic;line-height:1.6}}
+.legend{{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}}
+.leg{{font-size:11px;font-weight:600;padding:4px 10px;border-radius:100px}}
 .totals{{background:#fff;border:1px solid #ddd8d0;border-radius:12px;padding:18px 22px;margin:20px 0}}
-.tot-row{{display:flex;justify-content:space-between;font-size:13px;color:#374151;padding:5px 0;border-bottom:1px solid #f0ece5}}
-.tot-row:last-child{{border-bottom:none;font-size:17px;font-weight:700;color:#1a1a1a;padding-top:12px}}
+.tot-row{{display:flex;justify-content:space-between;font-size:13px;color:#374151;padding:6px 0;border-bottom:1px solid #f0ece5}}
+.tot-row.grand{{border-bottom:none;font-size:17px;font-weight:700;color:#1a1a1a;padding-top:14px}}
+.tot-row.addon{{color:#92400e}}
 .sig-card{{background:#fff;border:1px solid #ddd8d0;border-radius:12px;padding:22px;margin-bottom:20px}}
 .sig-title{{font-size:15px;font-weight:700;margin-bottom:5px}}
 .sig-txt{{font-size:13px;color:#6b7280;line-height:1.6;margin-bottom:18px}}
@@ -143,7 +184,7 @@ wom_html = f'''<!DOCTYPE html>
 .sig-line{{border:none;border-bottom:1.5px solid #5C4033;width:100%;padding:7px 4px;font-size:14px;background:transparent;outline:none;color:#1a1a1a}}
 .print-btn{{display:block;width:100%;padding:15px;background:#166534;color:#fff;font-size:15px;font-weight:700;border:none;border-radius:10px;cursor:pointer;text-align:center}}
 .print-btn:hover{{background:#14532D}}
-@media print{{.nav-bar,.print-btn{{display:none}}body{{background:#fff}}.page{{margin:0;padding:0}}}}
+@media print{{.nav-bar,.print-btn,.offer-banner{{display:none}}body{{background:#fff}}.page{{margin:0;padding:0}}}}
 </style>
 </head>
 <body>
@@ -151,12 +192,12 @@ wom_html = f'''<!DOCTYPE html>
 {NAV_WOM}
 <div class="hero">
   <div class="hero-top">
-    <div><h1>Work Authorization</h1><div class="hero-sub">Estimates #2509 &amp; #2510 &middot; Word of Mouth Tree Service</div></div>
-    <div style="background:#166534;color:#fff;font-size:11px;font-weight:700;letter-spacing:.8px;padding:6px 14px;border-radius:100px">PENDING SIGNATURE</div>
+    <div><h1>Work Authorization — All 12 Items</h1><div class="hero-sub">Word of Mouth Tree Service &middot; Proposed all-in offer: $3,200</div></div>
+    <div style="background:#92400e;color:#fff;font-size:11px;font-weight:700;letter-spacing:.8px;padding:6px 14px;border-radius:100px">OFFER PENDING</div>
   </div>
   <div class="parties">
     <div>
-      <div class="p-lbl">Authorized by</div>
+      <div class="p-lbl">Property Owner</div>
       <div class="p-name">Paul Irumudomon</div>
       <div class="p-det">2509 Ives Avenue, Orlando FL 32806<br>(407) 717-0861</div>
     </div>
@@ -167,28 +208,59 @@ wom_html = f'''<!DOCTYPE html>
     </div>
   </div>
 </div>
+
+<div class="offer-banner">
+  <h2>&#128176; All-In Offer: $3,200 for All 12 Items</h2>
+  <p>Your existing estimates (#2509 + #2510) cover 6 items for $3,000. I am offering you the full job — all 12 items — for a flat <strong>$3,200</strong>. That is $200 more to pick up 6 additional trees and services and close the entire property in one visit.</p>
+  <div class="offer-script">"I want to give you the job. Can you add the missing items to your existing scope for a flat $3,200 all-in? I will sign today and pay by check on completion."</div>
+</div>
+
 <div class="sum-row">
-  <div class="sum-box"><div class="sum-lbl">Total</div><div class="sum-val">$3,000</div><div class="sum-sub">#2509 + #2510</div></div>
-  <div class="sum-box"><div class="sum-lbl">Items</div><div class="sum-val">6</div><div class="sum-sub">Trees / services</div></div>
-  <div class="sum-box"><div class="sum-lbl">Valid Until</div><div class="sum-val">Jul 17</div><div class="sum-sub">30 days from Jun 17</div></div>
+  <div class="sum-box"><div class="sum-lbl">Current Quote</div><div class="sum-val">$3,000</div><div class="sum-sub">6 items — #2509+#2510</div></div>
+  <div class="sum-box highlight"><div class="sum-lbl">Proposed All-In</div><div class="sum-val" style="color:#166534">$3,200</div><div class="sum-sub">All 12 items</div></div>
+  <div class="sum-box"><div class="sum-lbl">Items</div><div class="sum-val">12</div><div class="sum-sub">Total trees / services</div></div>
+  <div class="sum-box"><div class="sum-lbl">Add-Ons</div><div class="sum-val">+$200</div><div class="sum-sub">Items #04 05 06 07 11 12</div></div>
 </div>
-<div class="intro">By signing this document I authorize Word of Mouth Tree Service, Inc. to proceed with all six items below, per Estimates #2509 and #2510 (June 17 2026) and all Terms &amp; Conditions therein. Total: <strong>$3,000.00</strong>. Payment on completion by check or ACH.</div>
-<div class="sec-head">Authorized work scope</div>
+
+<div class="legend">
+  <span class="leg" style="background:#DCFCE7;color:#166534">&#10003; In Estimate — already quoted</span>
+  <span class="leg" style="background:#FEF3C7;color:#92400e">+ Add-on — include in $3,200 offer</span>
+  <span class="leg" style="background:#DBEAFE;color:#1d4ed8">&#128203; Price Needed — WOM to confirm</span>
+</div>
+
+<div class="sec-head">Complete 12-item work scope</div>
 {wom_cards_html}
+
 <div class="totals">
-  <div class="tot-row"><span>Estimate #2509 — Pruning &amp; fallen palm (5 items)</span><span>$1,500.00</span></div>
-  <div class="tot-row"><span>Estimate #2510 — Norfolk Pine removal + stump</span><span>$1,500.00</span></div>
-  <div class="tot-row"><span>Total Authorized</span><span>$3,000.00</span></div>
+  <div class="tot-row"><span>Estimate #2509 — Pruning &amp; fallen palm (Items 01, 02, 08, 09, 10)</span><span>$1,500.00</span></div>
+  <div class="tot-row"><span>Estimate #2510 — Norfolk Pine removal + stump (Item 03)</span><span>$1,500.00</span></div>
+  <div class="tot-row addon"><span>Add-ons — Items 04, 05, 06, 11 (to confirm with WOM)</span><span>+TBD</span></div>
+  <div class="tot-row addon"><span>Items 07 &amp; 12 — WOM to price at site</span><span>+TBD</span></div>
+  <div class="tot-row grand"><span>&#128176; Proposed All-In Total</span><span style="color:#166534">$3,200.00</span></div>
 </div>
+
 <div class="sig-card">
   <div class="sig-title">Authorization &amp; Signature</div>
-  <div class="sig-txt">By signing below I confirm I have reviewed all work items, photos, and the Terms &amp; Conditions in Estimates #2509 and #2510, and authorize Word of Mouth Tree Service, Inc. to proceed. Payment of $3,000.00 due on completion by check (preferred) or ACH.</div>
-  <div class="sig-grid">
-    <div><label class="sig-lbl">Signature</label><input class="sig-line" type="text" placeholder="Sign here"></div>
-    <div><label class="sig-lbl">Date</label><input class="sig-line" type="text" placeholder="MM / DD / YYYY"></div>
+  <div class="sig-txt">This document proposes a flat $3,200 all-in price for all 12 items above, subject to Word of Mouth Tree Service confirming the add-on scope and pricing items #07 and #12 at the site visit. Upon agreement, both parties sign below and work is authorized to begin. Payment of $3,200.00 due on completion by check (preferred) or ACH.</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:16px">
+    <div>
+      <div class="p-lbl" style="margin-bottom:8px">Owner — Paul Irumudomon</div>
+      <div class="sig-grid">
+        <div><label class="sig-lbl">Signature</label><input class="sig-line" type="text" placeholder="Sign here"></div>
+        <div><label class="sig-lbl">Date</label><input class="sig-line" type="text" placeholder="MM / DD / YYYY"></div>
+      </div>
+    </div>
+    <div>
+      <div class="p-lbl" style="margin-bottom:8px">Contractor — Word of Mouth Tree Service</div>
+      <div class="sig-grid">
+        <div><label class="sig-lbl">Signature</label><input class="sig-line" type="text" placeholder="Sign here"></div>
+        <div><label class="sig-lbl">Date</label><input class="sig-line" type="text" placeholder="MM / DD / YYYY"></div>
+      </div>
+    </div>
   </div>
+  <div style="font-size:11px;color:#9ca3af;border-top:1px solid #f0ece5;padding-top:12px">Final agreed price: $_____________ &nbsp;&nbsp;&nbsp; Payment method: &#9744; Check &nbsp; &#9744; ACH</div>
 </div>
-<button class="print-btn" onclick="window.print()">Print / Save as PDF to send</button>
+<button class="print-btn" onclick="window.print()">Print / Save as PDF to send to WOM</button>
 </div>
 </body>
 </html>'''
