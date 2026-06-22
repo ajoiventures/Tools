@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tree Service Quote Evaluation — All 12 Items</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F5F3EF;color:#1a1a1a;font-size:15px}
+.page{max-width:820px;margin:32px auto;padding:0 16px 64px}
+
+/* Hero */
+.hero{background:#fff;border:1px solid #ddd8d0;border-radius:14px;padding:26px 28px;margin-bottom:20px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.hero h1{font-size:20px;font-weight:700;margin-bottom:4px}
+.hero p{font-size:13px;color:#6b7280;line-height:1.6}
+
+/* Company cards */
+.co-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+@media(max-width:580px){.co-grid{grid-template-columns:1fr}}
+.co-card{background:#fff;border:1px solid #ddd8d0;border-radius:12px;padding:16px}
+.co-card.best{border:2px solid #166534}
+.co-name{font-size:13px;font-weight:700;margin-bottom:2px}
+.co-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;margin-bottom:8px}
+.badge-green{background:#DCFCE7;color:#166534}
+.badge-blue{background:#DBEAFE;color:#1d4ed8}
+.co-quoted{font-size:22px;font-weight:700;margin-bottom:2px}
+.co-coverage{font-size:12px;color:#6b7280;margin-bottom:6px}
+.co-true{font-size:12px;padding:5px 8px;border-radius:6px;font-weight:500}
+.true-red{background:#FEE2E2;color:#991b1b}
+.true-amber{background:#FEF3C7;color:#92400e}
+.co-contact{font-size:11px;color:#6b7280;margin-top:8px;line-height:1.6;border-top:1px solid #f0ece5;padding-top:8px}
+
+/* Section heading */
+.sec-head{font-size:11px;font-weight:700;letter-spacing:1px;color:#8D6E63;text-transform:uppercase;margin:28px 0 12px}
+
+/* Coverage table */
+.tbl-wrap{overflow-x:auto;background:#fff;border:1px solid #ddd8d0;border-radius:12px;margin-bottom:24px}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:560px}
+th{padding:9px 10px;font-size:10px;font-weight:700;color:#6b7280;border-bottom:1.5px solid #e5e0d6;text-align:left;white-space:nowrap;background:#F8F4EF}
+th.ctr{text-align:center}
+td{padding:8px 10px;border-bottom:0.5px solid #f0ece5;vertical-align:middle;color:#1a1a1a}
+td.ctr{text-align:center}
+tr:last-child td{border-bottom:none}
+.tbl-section td{background:#F8F4EF;font-size:10px;font-weight:700;color:#8D6E63;letter-spacing:.6px;text-transform:uppercase;padding:6px 10px}
+.tbl-foot td{background:#F8F4EF;font-weight:700;font-size:12px}
+.y{color:#166534;font-weight:600}
+.n{color:#b91c1c}
+.q{color:#b45309}
+.nt{font-size:10px;color:#6b7280}
+.pill{display:inline-block;font-size:10px;padding:1px 7px;border-radius:100px;font-weight:600}
+.pill-r{background:#FEE2E2;color:#991b1b}
+.pill-g{background:#DCFCE7;color:#166534}
+.pill-b{background:#DBEAFE;color:#1d4ed8}
+.pill-a{background:#FEF3C7;color:#92400e}
+
+/* Item cards */
+.item-card{background:#fff;border:1px solid #ddd8d0;border-radius:12px;overflow:hidden;margin-bottom:16px;box-shadow:0 1px 6px rgba(0,0,0,.05)}
+.item-header{background:linear-gradient(to right,#F8F4EF,#fff);border-bottom:1px solid #e5e0d6;padding:11px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.item-num{width:28px;height:28px;border-radius:50%;background:#5C4033;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.item-title{font-size:14px;font-weight:700;flex:1;min-width:120px}
+.item-loc{font-size:11px;color:#6b7280;width:100%;margin-top:-4px;padding-left:38px}
+.coverage-pills{display:flex;gap:5px;flex-wrap:wrap}
+.item-body{display:grid;grid-template-columns:280px 1fr}
+@media(max-width:580px){.item-body{grid-template-columns:1fr}}
+.item-photo{overflow:hidden;height:320px;background:#111;border-right:1px solid #ddd8d0}
+@media(max-width:580px){.item-photo{border-right:none;border-bottom:1px solid #ddd8d0;height:240px}}
+.item-photo img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
+.item-photo.no-photo{display:flex;align-items:center;justify-content:center;color:#555;font-size:12px}
+.item-info{padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.info-lbl{font-size:9px;font-weight:700;letter-spacing:1px;color:#8D6E63;text-transform:uppercase;margin-bottom:3px}
+.info-txt{font-size:12px;line-height:1.6;color:#374151}
+.co-rows{display:flex;flex-direction:column;gap:4px}
+.co-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:4px 8px;border-radius:6px}
+.co-row.covered{background:#F0FDF4;color:#166534}
+.co-row.missing{background:#FFF1F2;color:#9f1239}
+.co-row.unclear{background:#FFFBEB;color:#92400e}
+.co-row.none{background:#F9FAFB;color:#9ca3af}
+.co-row-name{font-weight:600;font-size:11px}
+.co-row-detail{font-size:11px}
+.unquoted-banner{background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:8px 12px;font-size:12px;color:#92400e;font-weight:500;display:flex;align-items:center;gap:6px}
+
+/* Playbook */
+.playbook-card{background:#fff;border:1px solid #ddd8d0;border-radius:12px;padding:18px 20px;margin-bottom:14px}
+.pb-head{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.pb-name{font-size:14px;font-weight:700}
+.pb-target{font-size:12px;font-weight:700;padding:4px 12px;border-radius:100px}
+.target-green{background:#DCFCE7;color:#166534}
+.target-amber{background:#FEF3C7;color:#92400e}
+.target-blue{background:#DBEAFE;color:#1d4ed8}
+.pb-contact{font-size:11px;color:#6b7280;margin-bottom:10px}
+.pb-ask{background:#F8F4EF;border-left:3px solid #5C4033;border-radius:0 8px 8px 0;padding:10px 14px;font-size:13px;font-style:italic;color:#374151;margin-bottom:10px;line-height:1.6}
+.pb-steps{padding-left:1.1rem;list-style:disc}
+.pb-steps li{font-size:12px;color:#6b7280;line-height:1.7;margin-bottom:2px}
+.pb-steps li strong{color:#1a1a1a;font-weight:600}
+
+/* Verdict */
+.verdict{background:#1a3a2a;color:#d1fae5;border-radius:12px;padding:20px 22px;margin-top:8px}
+.verdict-title{font-size:13px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#6ee7b7;margin-bottom:10px}
+.verdict-steps{padding-left:1.1rem;list-style:decimal}
+.verdict-steps li{font-size:13px;line-height:1.8;margin-bottom:2px;color:#d1fae5}
+.verdict-steps li strong{color:#fff;font-weight:700}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- Hero -->
+<div class="hero">
+  <h1>Tree Service Quote Evaluation — All 12 Items</h1>
+  <p>Owner approved all 12 items. No single company covers everything. This document compares all three quotes item by item, calculates the true all-in price, and gives you the negotiation script to get the best deal.</p>
+</div>
+
+<!-- Company summary cards -->
+<div class="sec-head">Company quotes at a glance</div>
+<div class="co-grid">
+  <div class="co-card">
+    <div class="co-name">ABT Tree Care</div>
+    <div class="co-quoted">$4,500</div>
+    <div class="co-coverage">9 of 12 items · after $750 discount</div>
+    <div class="co-true true-red">True all-in: ~$5,100–5,500</div>
+    <div class="co-contact">(386) 331-5110<br>treecareabt@gmail.com</div>
+  </div>
+  <div class="co-card best">
+    <div class="co-name">Word of Mouth <span class="co-badge badge-green">Lowest base</span></div>
+    <div class="co-quoted">$3,000</div>
+    <div class="co-coverage">6 of 12 items · #2509 + #2510</div>
+    <div class="co-true true-amber">True all-in: ~$3,600–4,000</div>
+    <div class="co-contact">(407) 862-9779<br>atollman.womtree@gmail.com</div>
+  </div>
+  <div class="co-card">
+    <div class="co-name">J&J Lawn & Tree <span class="co-badge badge-blue">ISA Certified</span></div>
+    <div class="co-quoted">$3,550</div>
+    <div class="co-coverage">8 of 12 items · Proposal #68072</div>
+    <div class="co-true true-amber">True all-in: ~$4,100–4,600</div>
+    <div class="co-contact">(407) 774-2076<br>OfficeJJtree@gmail.com</div>
+  </div>
+</div>
+
+<!-- Coverage table -->
+<div class="sec-head">Coverage by item — all 12</div>
+<div class="tbl-wrap">
+<table>
+  <thead>
+    <tr>
+      <th>#</th><th>Item</th>
+      <th class="ctr">ABT</th><th class="ctr">WOM</th><th class="ctr">J&J</th>
+      <th>Note</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td class="tbl-section" colspan="6">Removals</td></tr>
+    <tr>
+      <td>01</td><td>Fallen palm — front driveway</td>
+      <td class="ctr n">✗</td><td class="ctr y">✓</td><td class="ctr y">✓ $200</td>
+      <td class="nt"><span class="pill pill-r">ABT missed</span></td>
+    </tr>
+    <tr>
+      <td>03</td><td>Norfolk Pine removal + stump</td>
+      <td class="ctr y">✓ $1,550</td><td class="ctr y">✓ $1,500</td><td class="ctr y">✓ $2,150</td>
+      <td class="nt">J&J $600 over market</td>
+    </tr>
+    <tr>
+      <td>04</td><td>Small dead tree (near Norfolk Pine)</td>
+      <td class="ctr y">✓ FREE</td><td class="ctr n">✗</td><td class="ctr y">✓ incl.</td>
+      <td class="nt"><span class="pill pill-r">WOM missing</span></td>
+    </tr>
+    <tr>
+      <td>05</td><td>Dead Yucca Palm</td>
+      <td class="ctr y">✓ FREE</td><td class="ctr n">✗</td><td class="ctr y">✓ incl.</td>
+      <td class="nt"><span class="pill pill-r">WOM missing</span></td>
+    </tr>
+    <tr><td class="tbl-section" colspan="6">Trimming / Pruning</td></tr>
+    <tr>
+      <td>02</td><td>Camphor tree — front yard</td>
+      <td class="ctr y">✓ $1,500</td><td class="ctr y">✓ incl.</td><td class="ctr q">?</td>
+      <td class="nt">Confirm J&J scope</td>
+    </tr>
+    <tr>
+      <td>06</td><td>Driveway oak overhang (neighbor's)</td>
+      <td class="ctr y">✓ $100</td><td class="ctr n">✗</td><td class="ctr n">✗</td>
+      <td class="nt"><span class="pill pill-r">Only ABT quoted</span></td>
+    </tr>
+    <tr>
+      <td>08</td><td>Cedar tree — right side</td>
+      <td class="ctr y">✓ $400</td><td class="ctr y">✓ incl.</td><td class="ctr q">?</td>
+      <td class="nt">Confirm J&J scope</td>
+    </tr>
+    <tr>
+      <td>09</td><td>Front right oak tree</td>
+      <td class="ctr y">✓ $800</td><td class="ctr y">✓ incl.</td><td class="ctr y">✓ incl.</td>
+      <td class="nt"><span class="pill pill-g">All 3 cover</span></td>
+    </tr>
+    <tr>
+      <td>10</td><td>Backyard Laurel Oak</td>
+      <td class="ctr y">✓ $750</td><td class="ctr y">✓ incl.</td><td class="ctr y">✓ incl.</td>
+      <td class="nt"><span class="pill pill-g">All 3 cover</span></td>
+    </tr>
+    <tr>
+      <td>11</td><td>Smaller front-left fence tree</td>
+      <td class="ctr y">✓ $150</td><td class="ctr n">✗</td><td class="ctr n">✗</td>
+      <td class="nt"><span class="pill pill-r">Only ABT quoted</span></td>
+    </tr>
+    <tr><td class="tbl-section" colspan="6">Unquoted by all — must add</td></tr>
+    <tr>
+      <td>07</td><td>Roadside palm debris hauling</td>
+      <td class="ctr n">✗</td><td class="ctr n">✗</td><td class="ctr n">✗</td>
+      <td class="nt"><span class="pill pill-a">Ask all 3</span></td>
+    </tr>
+    <tr>
+      <td>12</td><td>Palm by the pool</td>
+      <td class="ctr n">✗</td><td class="ctr n">✗</td><td class="ctr n">✗</td>
+      <td class="nt"><span class="pill pill-b">New — no one seen it</span></td>
+    </tr>
+    <tr class="tbl-foot">
+      <td colspan="2">Items covered</td>
+      <td class="ctr">9/12</td><td class="ctr">6/12</td><td class="ctr">8/12</td>
+      <td></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<!-- All 12 items with photos -->
+<div class="sec-head">All 12 items — photos & company coverage</div>
+
+<!-- Item 01 -->
+<div class="item-card">
+  <div class="item-header">
+    <div class="item-num">01</div>
+    <div class="item-title">Fallen Palm — Front Driveway</div>
+    <div class="coverage-pills"><span class="pill pill-r">ABT missed</span><span class="pill pill-g">WOM ✓</span><span class="pill pill-g">J&J ✓ $200</span></div>
+    <div class="item-loc">📍 Front driveway — HIGH PRIORITY</div>
+  </div>
+  <div class="item-body">
+    <div class="item-photo"><img src="photos/card_01.jpg" alt="Fallen palm front driveway" loading="lazy"></div>
+    <div class="item-info">
+      <div><div class="info-lbl">Situation</div><p class="info-txt">Palm tree fully toppled in the front driveway. Roots exposed. Safety hazard — blocks driveway access and risks vehicle damage.</p></div>
+      <div><div class="info-lbl">Coverage</div>
+        <div class="co-rows">
+          <div class="co-row missing"><span class="co-row-name">ABT</span><span class="co-row-detail">✗ Not quoted — confirm if included</span></div>
+          <div class="co-row covered"><span class="co-row-name">WOM #2509</span><span class="co-row-detail">✓ Included in $1,500 bundle</span></div>
+          <div class="co-row covered"><span class="co-row-name">J&J</span><span class="co-row-detail">✓ $200 for 2 fallen palms</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Item 02 -->
+<div class="item-card">
+  <div class="item-header">
+    <div class="item-num">02</div>
+    <div class="item-title">Camphor Tree — Front Yard</div>
+    <div class="coverage-pills"><span class="pill pill-g">ABT ✓ $1,500</span><span class="pill pill-g">WOM ✓</span><span class="pill pill-a">J&J unclear</span></div>
+    <div class="item-loc">📍 Front yard — MEDIUM PRIORITY</div>
+  </div>
+  <div class="item-body">
+    <div class="item-photo"><img src="photos/card_02.jpg" alt="Camphor tree front yard" loading="lazy"></div>
+    <div class="item-info">
+      <div><div class="info-lbl">Situation</div><p class="info-txt">Large Camphor tree with marked branches and a large circled area of sucker growth and dead limbs throughout the canopy.</p></div>
+      <div><div class="info-lbl">Coverage</div>
+        <div class="co-rows">
+          <div class="co-row covered"><span class="co-row-name">ABT</span><span class="co-row-detail">✓ $1,500 — remove marked branches + sucker growth</span></div>
+          <div class="co-row covered"><span class="co-row-name">WOM #2509</span><span class="co-row-detail">✓ Included in $1,500 bundle</span></div>
+          <div class="co-row unclear"><span class="co-row-name">J&J</span><span class="co-row-detail">? Confirm if in $1,000 trimming bundle</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Item 03 -->
+<div class="item-card">
+  <div class="item-header">
+    <div class="item-num">03</div>
+    <div class="item-title">Norfolk Pine Removal + Stump Grinding</div>
+    <div class="coverage-pills"><span class="pill pill-g">ABT ✓ $1,550</span><span class="pill pill-g">WOM ✓ $1,500</span><span class="pill pill-a">J&J $2,150</span></div>
+    <div class="item-loc">📍 Backyard, left fence line — HIGH PRIORITY</div>
+  </div>
+  <div class="item-body">
+    <div class="item-photo"><img src="photos/card_03.jpg" alt="Norfolk Pine backyard" loading="lazy"></div>
+    <div class="item-info">
+      <div><div class="info-lbl">Situation</div><p class="info-txt">Norfolk Pine heavily browned along the left fence line. Full removal plus stump grinding included in all three quotes — but J&J charges $600 more than the other two.</p></div>
+      <div><div class="info-lbl">Coverage</div>
+        <div class="co-rows">
+          <div class="co-row covered"><span class="co-row-name">ABT</span><span class="co-row-detail">✓ $1,400 removal + $150 stump = $1,550</span></div>
+          <div class="co-row covered"><span class="co-row-name">WOM #2510</span><span class="co-row-detail">✓ $1,500 removal + stump combined</span></div>
+          <div class="co-row unclear"><span class="co-row-name">J&J</span><span class="co-row-detail">✓ $2,000 removal + $150 stump = $2,150 — negotiate down</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Item 04 -->
+<div class="item-card">
+  <div class="item-header">
+    <div class="item-num">04</div>
+    <div class="item-title">Small Dead Tree (Near Norfolk Pine)</div>
+    <div class="coverage-pills"><span class="pill pill-g">ABT ✓ FREE</span><span class="pill pill-r">WOM ✗</span><span class="pill pill-g">J&J ✓ incl.</span></div>
+    <div class="item-loc">📍 Backyard, in front of Norfolk Pine — MEDIUM PRIORITY</div>
+  </div>
+  <div class="item-body">
+    <div class="item-photo"><img src="photos/card_04.jpg" alt="Small dead tree near Norfolk Pine" loading="lazy"></div>
+    <div class="item-info">
+      <div><div class="info-lbl">Situation</div><p class="info-txt">Small fully dead tree with no foliage, directly in front of the Norfolk Pines. Contractor circled the entire tree for removal.</p></div>
+      <div><div class="info-lbl">Coverage</div>
+        <div class="co-rows">
+          <div class="co-row covered"><span class="co-row-name">ABT</span><span class="co-row-detail">✓ FREE — included in Yucca/dead tree line item</span></div>
+          <div class="co-row missing"><span class="co-row-name">WOM</span><span class="co-row-detail">✗ Not quoted — ask to add</span></div>
+          <div class="co-row covered"><span class="co-row-name">J&J</span><span class="co-row-detail">✓ Included in "2 small dead trees" $200</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Item 05 -->
+<div class="item-card">
+  <div class="item-header">
+    <div class="item-num">05</div>
+    <div class="item-title">Dead Yucca Palm — Front Left Fence Corner</div>
+    <div class="coverage-pills"><span class="pill pill-g">ABT ✓ FREE</span><span class="pill pill-r">WOM ✗</span><span class="pill pill-g">J&J ✓ incl.</span></div>
+    <div class="item-loc">📍 Front left corner of fence — MEDIUM PRIORITY</div>
+  </div>
+  <div class="item-body">
+    <div class="item-photo"><img src="photos/card_05.jpg" alt="Dead Yucca Palm fence corner" loading="lazy"></div>
+    <div class="item-info">
+      <div><div class="info-lbl">Situation</div><p class="info-txt">Dead Yucca Palm in the front left corner of the fence. Circled for full removal including root and base.</p></div>
+      <div><div class="info-lbl">Coverage</div>
+        <div class="co-rows">
+          <div class="co-row covered"><span class="co-row-name">ABT</span><span class="co-row-detail">✓ FREE — bundled with small dead tree</span></div>
+          <div class="co-row missing"><span class="co-row-name">WOM</span><span class="co-row-detail">✗ Not quoted — ask to add</span></div>
+          <div class="co-row covered"><span class="co-row-name">J&J</span><span class="co-row-detail">✓ Included in "2 small dead trees" $200</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Item 06 -->
+<div class="item-card">
+  <div class="item-header">
+    <div class="item-num">06</div>
+    <div class="item-title">Driveway Oak Overhang (Neighbor's Tree)</div>
+    <div class="coverage-pills"><span class="pill pill-g">ABT ✓ $100</span><span class="pill pill-r">WOM ✗</span><span class="pill pill-r">J&J ✗</span></div>
+    <div class="item-loc">📍 Front driveway edge — HIGH PRIORITY</div>
+  </div>
+  <div class="item-body">
+    <div class="item-photo"><img src="photos/card_06.jpg" alt="Oak limb overhanging driveway" loading="lazy"></div>
+    <div class="item-info">
+      <div><div class="info-lbl">Situation</div><p class="info-txt">Lower hanging limbs from the neighbor's oak hang over the driveway. Circled for trimming to raise clearance above vehicles.</p></div>
+      <div><div class="info-lbl">Coverage</div>
+        <div class="co-rows">
+          <div class="co-row covered"><span class="co-row-name">ABT</span><span class="co-row-detail">✓ $100 — only company that quoted this</span></div>
+          <div class="co-row missing"><span class="co-row-name">WOM</span><span class="co-row-detail">✗ Not quoted — ask to add (~$100)</span></div>
+          <div class="co-row missing"><span class="co-row-name">J&J</span><span class="co-row-detail">✗ Not quoted — ask to add</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Item 07 -->
+<div class="item-card">
+  <div class="item-header">
+    <div class="item-num">07</div>
+    <div class="item-title">Roadside Palm Debris Hauling</div>
+    <div class="coverage-pills"><span class="pill pill-a">No one quoted</span></div>
+    <div class="item-loc">📍 Roadside / front of property — MEDIUM PRIORITY</div>
+  </div>
+  <div class="item-body">
+    <div class="item-photo"><img src="photos/card_07.jpg" alt="Roadside palm debris" loading="lazy"></div>
+    <div class="item-info">
+      <div><div class="info-lbl">Situation</div><p class="info-txt">Pile of palm debris left at the roadside by a third party. Homeowner wants crew to haul it away as part of the job — no cutting required.</p></div>
+      <div><div class="info-lbl">Coverage</div>
+        <div class="co-rows">
+          <div class="co-row none"><span class="co-row-name">ABT</span><span class="co-row-detail">✗ Not quoted — ask to price</span></div>
+          <div class="co-row none"><span class="co-row-name">WOM</span><span class="co-row-detail">✗ Not quoted — ask to price</span></div>
+          <div class="co-row none"><span class="co-row-name">J&J</span><span class="co-row-detail">✗ Not quoted — ask to price</span></div>
+        </div>
+      </div>
+      <div class="unquoted-banner">⚠ Ask all 3 companies to price this before signing</div>
+    </div>
+  </div>
+</div>
+
+<!-- Item 08 -->
+<div class="item-card">
+  <div class="item-header">
+    <div class="item-num">08</div>
+    <div class="item-title">Cedar Tree — Right Side of House</div>
+    <div class="coverage-pills"><span class="pill pill-g">ABT ✓ $400</span><span class="pill pill-g">WOM ✓</span><span class="pill pill-a">J&J unclear</span></div>
+    <div class="item-loc">📍 Right side yard — LOWER PRIORITY</div>
+  </div>
+  <div class="item-body">
+    <div class="item-photo"><img src="photos/card_08.jpg" alt="Cedar tree right side yard" loading="lazy"></div>
+    <div class="item-info">
+      <div><div class="info-lbl">Situation</div><p class="info-txt">Tall cedar along the right side yard walkway. Circled area shows dead lower limbs that need removal to improve clearance.</p></div>
+      <div><div class="info-lbl">Coverage</div>
+        <div class="co-rows">
+          <div class="co-row covered"><span class="co-row-name">ABT</span><span class="co-row-detail">✓ $400 — remove dead lower limbs</span></div>
+          <div class="co-row covered"><span class="co-row-name">WOM #2509</span><span class="co-row-detail">✓ Included in $1,500 bundle</span></div>
+          <div class="co-row unclear"><span class="co-row-name">J&J</span><span class="co-row-detail">? Confirm if in $1,000 trimming bundle</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Item 09 -->
+<div class="item-card">
+  <div class="item-header">
+    <div class="item-num">09</div>
+    <div class="item-title">Front Right Oak Tree</div>
+    <div class="coverage-pills"><span class="pill pill-g">ABT ✓ $800</span><span class="pill pill-g">WOM ✓</span><span class="pill pill-g">J&J ✓</span></div>
+    <div class="item-loc">📍 Front right side of house — MEDIUM PRIORITY</div>
+  </div>
+  <div class="item-body">
+    <div class="item-photo"><img src="photos/card_09.jpg" alt="Front right oak tree" loading="lazy"></div>
+    <div class="item-info">
+      <div><div class="info-lbl">Situation</div><p class="info-txt">Oak tree on the front right. Two lower hanging branches circled, plus sucker growth and dead limbs in the canopy marked for removal.</p></div>
+      <div><div class="info-lbl">Coverage</div>
+        <div class="co-rows">
+          <div class="co-row covered"><span class="co-row-name">ABT</span><span class="co-row-detail">✓ $800 — lower branches + sucker growth + dead limbs</span></div>
+          <div class="co-row covered"><span class="co-row-name">WOM #2509</span><span class="co-row-detail">✓ Raise canopy on Laurel oak at front of home</span></div>
+          <div class="co-row covered"><span class="co-row-name">J&J</span><span class="co-row-detail">✓ Included in $1,000 trimming bundle</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Item 10 -->
+<div class="item-card">
+  <div class="item-header">
+    <div class="item-num">10</div>
+    <div class="item-title">Backyard Laurel Oak Tree</div>
+    <div class="coverage-pills"><span class="pill pill-g">ABT ✓ $750</span><span class="pill pill-g">WOM ✓</span><span class="pill pill-g">J&J ✓</span></div>
+    <div class="item-loc">📍 Back left corner of house — LOWER PRIORITY</div>
+  </div>
+  <div class="item-body">
+    <div class="item-photo"><img src="photos/card_10.jpg" alt="Backyard Laurel Oak" loading="lazy"></div>
+    <div class="item-info">
+      <div><div class="info-lbl">Situation</div><p class="info-txt">Large Laurel Oak at the back left corner. Lower hanging limbs circled at the perimeter and interior sucker growth marked for wind mitigation.</p></div>
+      <div><div class="info-lbl">Coverage</div>
+        <div class="co-rows">
+          <div class="co-row covered"><span class="co-row-name">ABT</span><span class="co-row-detail">✓ $750 — lower limbs + interior sucker growth</span></div>
+          <div class="co-row covered"><span class="co-row-name">WOM #2509</span><span class="co-row-detail">✓ Weight reduction pruning on back left Laurel oak</span></div>
+          <div class="co-row covered"><span class="co-row-name">J&J</span><span class="co-row-detail">✓ Included in $1,000 trimming bundle</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Item 11 -->
+<div class="item-card">
+  <div class="item-header">
+    <div class="item-num">11</div>
+    <div class="item-title">Smaller Front-Left Fence Tree</div>
+    <div class="coverage-pills"><span class="pill pill-g">ABT ✓ $150</span><span class="pill pill-r">WOM ✗</span><span class="pill pill-r">J&J ✗</span></div>
+    <div class="item-loc">📍 Front left side, behind fence — LOWER PRIORITY</div>
+  </div>
+  <div class="item-body">
+    <div class="item-photo"><img src="photos/card_11.jpg" alt="Smaller front left fence tree" loading="lazy"></div>
+    <div class="item-info">
+      <div><div class="info-lbl">Situation</div><p class="info-txt">Smaller tree at the front left fence. Lower branches growing down toward the fence, and sucker growth creeping into the fence panels.</p></div>
+      <div><div class="info-lbl">Coverage</div>
+        <div class="co-rows">
+          <div class="co-row covered"><span class="co-row-name">ABT</span><span class="co-row-detail">✓ $150 — trim branches + remove sucker growth</span></div>
+          <div class="co-row missing"><span class="co-row-name">WOM</span><span class="co-row-detail">✗ Not quoted — ask to add (~$150)</span></div>
+          <div class="co-row missing"><span class="co-row-name">J&J</span><span class="co-row-detail">✗ Not quoted — ask to add</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Item 12 -->
+<div class="item-card">
+  <div class="item-header">
+    <div class="item-num">12</div>
+    <div class="item-title">Palm by the Pool</div>
+    <div class="coverage-pills"><span class="pill pill-a">No one quoted — new item</span></div>
+    <div class="item-loc">📍 Backyard pool and patio area — LOWER PRIORITY</div>
+  </div>
+  <div class="item-body">
+    <div class="item-photo no-photo" style="height:240px">📷 Photo pending</div>
+    <div class="item-info">
+      <div><div class="info-lbl">Situation</div><p class="info-txt">Palm tree beside the backyard pool and patio. New item added by owner — no contractor has assessed or quoted it yet.</p></div>
+      <div><div class="info-lbl">Coverage</div>
+        <div class="co-rows">
+          <div class="co-row none"><span class="co-row-name">ABT</span><span class="co-row-detail">✗ Not quoted — needs site visit</span></div>
+          <div class="co-row none"><span class="co-row-name">WOM</span><span class="co-row-detail">✗ Not quoted — needs site visit</span></div>
+          <div class="co-row none"><span class="co-row-name">J&J</span><span class="co-row-detail">✗ Not quoted — needs site visit</span></div>
+        </div>
+      </div>
+      <div class="unquoted-banner">⚠ Send photo to all 3 companies and ask for a price before signing</div>
+    </div>
+  </div>
+</div>
+
+<!-- Negotiation playbook -->
+<div class="sec-head">Negotiation playbook — actions per company</div>
+
+<div class="playbook-card">
+  <div class="pb-head">
+    <div>
+      <div class="pb-name">1. Word of Mouth Tree Service</div>
+      <div class="pb-contact">(407) 862-9779 · atollman.womtree@gmail.com · Base: $3,000 · 6 items covered</div>
+    </div>
+    <span class="pb-target target-green">Target: $3,200 all-in</span>
+  </div>
+  <div class="pb-ask">"I want to give you the job. Can you add the missing items (#04, #05, #06, #07, #11, #12) to your existing $3,000 scope for a flat $3,200 all-in?"</div>
+  <ul class="pb-steps">
+    <li>Items #04, #05, #06, #11 cost only <strong>$650 at ABT</strong> — WOM can likely absorb them to win the full job.</li>
+    <li>Ask them to price <strong>#07 roadside hauling</strong> and <strong>#12 pool palm</strong> at the same call.</li>
+    <li>Request a <strong>single combined invoice</strong> for estimates #2509 + #2510 — bundling often gets a small discount.</li>
+    <li>Pay by <strong>check or ACH</strong> — avoids their 2.9% credit card surcharge (~$90 savings).</li>
+    <li>Offer to <strong>sign today</strong> if they hit $3,200 all-in — companies prioritize quick closes.</li>
+  </ul>
+</div>
+
+<div class="playbook-card">
+  <div class="pb-head">
+    <div>
+      <div class="pb-name">2. ABT Tree Care</div>
+      <div class="pb-contact">(386) 331-5110 · treecareabt@gmail.com · Base: $4,500 · Already gave $750 off</div>
+    </div>
+    <span class="pb-target target-amber">Target: $3,500 all-in</span>
+  </div>
+  <div class="pb-ask">"Word of Mouth quoted me $3,200 for all 12 items. You cover the most work — match $3,500 and we sign today."</div>
+  <ul class="pb-steps">
+    <li>They moved $5,250 → $4,500 already — <strong>another $500–$1,000 drop is realistic</strong>.</li>
+    <li>Point out they <strong>missed #01</strong> (fallen palm) entirely — ask if it's included or get it added free.</li>
+    <li>They already give <strong>#04 and #05 free</strong> — use that as evidence they're flexible.</li>
+    <li>Ask for a <strong>cash/check price</strong> — often unlocks an extra 5–10% off.</li>
+    <li>Get them to price <strong>#07 and #12</strong> for a true all-in number.</li>
+  </ul>
+</div>
+
+<div class="playbook-card">
+  <div class="pb-head">
+    <div>
+      <div class="pb-name">3. J&J Lawn & Tree Service</div>
+      <div class="pb-contact">(407) 774-2076 · OfficeJJtree@gmail.com · ISA Certified FL-5734A · Base: $3,550</div>
+    </div>
+    <span class="pb-target target-blue">Target: $3,100 all-in</span>
+  </div>
+  <div class="pb-ask">"Your Norfolk Pine is $600 above my other quotes. Match $1,500 for the Norfolk Pine, confirm Camphor and Cedar are in your trimming scope, and add the missing items — let's do $3,100 all-in."</div>
+  <ul class="pb-steps">
+    <li><strong>Norfolk Pine at $2,150</strong> is the biggest overcharge vs ABT ($1,550) and WOM ($1,500). Dropping to $1,500 saves $650 immediately.</li>
+    <li>Clarify whether <strong>Camphor (#02) and Cedar (#08)</strong> are in their $1,000 trimming bundle — if not, add another $1,500–$1,900.</li>
+    <li>Ask to add <strong>#06 driveway oak, #07 debris, #11 fence tree, #12 pool palm</strong>.</li>
+    <li><strong>ISA certification</strong> is real — worth a small premium over WOM if the gap closes.</li>
+    <li>Pay by <strong>Zelle</strong> (their preferred method) — avoids the 3% card fee.</li>
+  </ul>
+</div>
+
+<!-- Verdict -->
+<div class="verdict">
+  <div class="verdict-title">Best move — in order</div>
+  <ol class="verdict-steps">
+    <li><strong>Call Word of Mouth first</strong> — ask for all 12 items at $3,200. If yes, you save $1,300 vs ABT.</li>
+    <li>If WOM won't add the missing items, <strong>call ABT</strong> and show them the WOM number. Push for $3,500 all-in.</li>
+    <li>Use <strong>J&J as your backup</strong> — if they confirm Camphor + Cedar in scope and drop the Norfolk Pine to $1,500, they hit ~$3,050 with ISA credentials — best value overall.</li>
+    <li>Before signing anyone, <strong>send a photo of the pool palm (#12)</strong> and ask all three to price it. Don't leave it open-ended after you sign.</li>
+  </ol>
+</div>
+
+</div>
+</body>
+</html>
