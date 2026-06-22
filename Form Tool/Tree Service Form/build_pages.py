@@ -261,8 +261,80 @@ wom_html = f'''<!DOCTYPE html>
     <strong>Reply to:</strong> Paul Irumudomon &nbsp;&middot;&nbsp; (407) 717-0861 &nbsp;&middot;&nbsp; ajoiventures@gmail.com
   </div>
 </div>
-<button class="print-btn" onclick="window.print()">Save as PDF / Print to attach to email</button>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:0">
+  <button class="print-btn" onclick="window.print()" style="background:#5C4033">Save as PDF</button>
+  <button class="print-btn" id="notify-btn" onclick="sendConfirmation()">&#9993; Send Confirmation to Paul</button>
 </div>
+<div id="save-toast" style="display:none;text-align:center;font-size:12px;color:#166534;margin-top:8px;font-weight:600">&#10003; Progress saved</div>
+</div>
+<script>
+const ITEMS = {{
+  1:  'Fallen Palm — Front Driveway',
+  2:  'Camphor Tree — Front Yard',
+  3:  'Norfolk Pine Removal + Stump Grinding',
+  4:  'Small Dead Tree',
+  5:  'Dead Yucca Palm',
+  6:  'Driveway Oak Overhang — Front Laurel Oak',
+  7:  'Roadside Palm Debris Hauling',
+  8:  'Cedar Tree — Right Side of House',
+  9:  'Front Right Oak Tree',
+  10: 'Backyard Laurel Oak',
+  11: 'Smaller Front-Left Fence Tree',
+  12: 'Palm by the Pool'
+}};
+const ADDON = [1,4,5,6,11,12];
+
+function getBoxes() {{
+  return document.querySelectorAll('input[type=checkbox]');
+}}
+
+function saveState() {{
+  const state = {{}};
+  getBoxes().forEach((cb, i) => state[i] = cb.checked);
+  localStorage.setItem('wom_checks', JSON.stringify(state));
+  const toast = document.getElementById('save-toast');
+  toast.style.display = 'block';
+  setTimeout(() => toast.style.display = 'none', 1500);
+}}
+
+function loadState() {{
+  const saved = localStorage.getItem('wom_checks');
+  if (!saved) return;
+  const state = JSON.parse(saved);
+  getBoxes().forEach((cb, i) => {{
+    if (state[i] !== undefined) cb.checked = state[i];
+  }});
+}}
+
+function sendConfirmation() {{
+  const boxes = getBoxes();
+  const confirmed = [], declined = [], addon_yes = [], addon_no = [];
+  boxes.forEach((cb, i) => {{
+    const num = i + 1;
+    const name = ITEMS[num] || ('Item ' + num);
+    if (ADDON.includes(num)) {{
+      (cb.checked ? addon_yes : addon_no).push(num + '. ' + name);
+    }} else {{
+      (cb.checked ? confirmed : declined).push(num + '. ' + name);
+    }}
+  }});
+
+  let body = 'Hi Paul,%0D%0A%0D%0A';
+  body += 'Here is my confirmation on the full 12-item scope at $3,200 all-in.%0D%0A%0D%0A';
+  body += '-- ORIGINAL SCOPE (confirmed) --%0D%0A' + confirmed.join('%0D%0A') + '%0D%0A%0D%0A';
+  if (addon_yes.length) body += '-- ADD-ONS I CAN INCLUDE --%0D%0A' + addon_yes.join('%0D%0A') + '%0D%0A%0D%0A';
+  if (addon_no.length) body += '-- ADD-ONS TO DISCUSS --%0D%0A' + addon_no.join('%0D%0A') + '%0D%0A%0D%0A';
+  body += 'Ready to proceed. Please confirm and we can schedule.%0D%0A%0D%0AWord of Mouth Tree Service';
+
+  const subject = 'Confirmation — Full 12-Item Scope at $3,200';
+  window.location.href = 'mailto:ajoiventures@gmail.com?subject=' + encodeURIComponent(subject) + '&body=' + body;
+}}
+
+document.addEventListener('DOMContentLoaded', () => {{
+  loadState();
+  getBoxes().forEach(cb => cb.addEventListener('change', saveState));
+}});
+</script>
 </body>
 </html>'''
 
