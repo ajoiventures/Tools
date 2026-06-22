@@ -320,11 +320,9 @@ function sendConfirmation() {{
   }});
 
   let body = 'Hi Paul,%0D%0A%0D%0A';
-  body += 'Here is my confirmation on the full 12-item scope at $3,200 all-in.%0D%0A%0D%0A';
-  body += '-- ORIGINAL SCOPE (confirmed) --%0D%0A' + confirmed.join('%0D%0A') + '%0D%0A%0D%0A';
-  if (addon_yes.length) body += '-- ADD-ONS I CAN INCLUDE --%0D%0A' + addon_yes.join('%0D%0A') + '%0D%0A%0D%0A';
-  if (addon_no.length) body += '-- ADD-ONS TO DISCUSS --%0D%0A' + addon_no.join('%0D%0A') + '%0D%0A%0D%0A';
-  body += 'Ready to proceed. Please confirm and we can schedule.%0D%0A%0D%0AWord of Mouth Tree Service';
+  body += 'Confirmed:%0D%0A' + [...confirmed, ...addon_yes].join('%0D%0A');
+  if (addon_no.length) body += '%0D%0A%0D%0ANeed to discuss:%0D%0A' + addon_no.join('%0D%0A');
+  body += '%0D%0A%0D%0AWord of Mouth Tree Service';
 
   const subject = 'Confirmation — Full 12-Item Scope at $3,200';
   window.location.href = 'mailto:ajoiventures@gmail.com?subject=' + encodeURIComponent(subject) + '&body=' + body;
