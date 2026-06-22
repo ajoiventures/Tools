@@ -115,8 +115,8 @@ wom_items = [
      'Smaller tree at the front left fence. Branches growing into fence; sucker growth creeping over panels.',
      ['Trim branches growing into fence line', 'Remove sucker growth from fence perimeter']),
     (12, 'Palm by the Pool',                      '📍 Backyard pool and patio',     'addon', 'Add-on',
-     'Palm tree beside the backyard pool and patio. Please assess and include in updated quote.',
-     ['Assess palm condition at site visit', 'Trim, remove, or prune per assessment and include in revised quote']),
+     'Palm tree beside the backyard pool and patio.',
+     ['Trim, remove, or prune per assessment']),
 ]
 
 STATUS_BADGE = {
@@ -226,8 +226,8 @@ wom_html = f'''<!DOCTYPE html>
 
 <div class="offer-banner">
   <h2>&#128203; Request: Updated Quote for All 12 Items</h2>
-  <p>Your current estimates (#2509 + #2510) cover 6 of the 12 items on this property for $3,000. I would like to give you the full job. Please review the 6 add-on items below, price items #07 and #12 on your next visit, and send me an updated all-in quote. My proposed budget for all 12 items is <strong>$3,200</strong>.</p>
-  <div class="offer-script">Please reply with a revised quote covering all 12 items listed below. I am ready to move forward as soon as I receive your updated pricing.</div>
+  <p>Your current estimates (#2509 + #2510) cover 6 of the 12 items on this property for $3,000. I would like to give you the full job — all 12 items — for <strong>$3,200 all-in</strong>. I am ready to move forward as soon as I hear back from you.</p>
+  <div class="offer-script">"I want to give you the full job. My budget for all 12 items is $3,200 all-in. I will sign and pay by check on completion."</div>
 </div>
 
 <div class="sum-row">
@@ -250,17 +250,13 @@ wom_html = f'''<!DOCTYPE html>
   <div class="tot-row"><span>Estimate #2509 — Pruning (Items 02, 07, 08, 09, 10)</span><span>$1,500.00</span></div>
   <div class="tot-row"><span>Estimate #2510 — Norfolk Pine removal + stump (Item 03)</span><span>$1,500.00</span></div>
   <div class="tot-row"><span>Estimate #2509 — Roadside palm debris hauling (Item 07)</span><span>Included</span></div>
-  <div class="tot-row addon"><span>Add-ons — Items 01, 04, 05, 06, 11, 12 (please price)</span><span>Your price: $________</span></div>
-  <div class="tot-row grand"><span>Updated All-In Total (please provide)</span><span>$____________</span></div>
+  <div class="tot-row addon"><span>Add-ons — Items 01, 04, 05, 06, 11, 12</span><span>included in offer</span></div>
+  <div class="tot-row grand"><span>Proposed All-In Total</span><span style="color:#166534">$3,200.00</span></div>
 </div>
 
 <div class="sig-card">
-  <div class="sig-title">&#9993; Please Reply With Your Updated Quote</div>
-  <div class="sig-txt">Review the 12 items and photos above. Reply to this email with:<br><br>
-  1. Confirmation of which add-on items (04, 05, 06, 11) you can include<br>
-  2. Pricing for items #07 (roadside debris hauling) and #12 (pool palm) after site review<br>
-  3. Your updated all-in total for all items you can cover<br><br>
-  My proposed budget for the full scope is <strong>$3,200</strong>. I am ready to move forward immediately upon receiving your revised quote. Payment by check on completion.</div>
+  <div class="sig-title">&#9993; Ready to Move Forward</div>
+  <div class="sig-txt">All 12 items and photos are listed above. My budget for the full scope is <strong>$3,200 all-in</strong>. I am ready to sign and move forward as soon as I hear back from you. Payment by check on completion.</div>
   <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:12px 16px;margin-top:12px;font-size:13px;color:#14532D">
     <strong>Reply to:</strong> Paul Irumudomon &nbsp;&middot;&nbsp; (407) 717-0861 &nbsp;&middot;&nbsp; ajoiventures@gmail.com
   </div>
