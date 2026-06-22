@@ -98,7 +98,7 @@ wom_items = [
     (6,  'Driveway Oak Overhang (Neighbor\'s)',   '📍 Front driveway edge',         'addon', 'Add-on',
      "Limbs from neighbor's oak hang over the driveway. Trim to restore vehicle clearance.",
      ["Trim overhanging oak limbs from neighbor's tree at driveway edge", 'Raise clearance to safe vehicle height']),
-    (7,  'Roadside Palm Debris Hauling',          '📍 Roadside / front of property','tbd',   'Price TBD',
+    (7,  'Roadside Palm Debris Hauling',          '📍 Roadside / front of property','quoted', '#2509',
      'Pile of palm debris at the roadside left by a third party. Hauling only — no cutting involved.',
      ['Haul and dispose of existing roadside palm debris pile']),
     (8,  'Cedar Tree — Right Side of House',      '📍 Right side yard',             'quoted', '#2509',
@@ -114,9 +114,9 @@ wom_items = [
     (11, 'Smaller Front-Left Fence Tree',         '📍 Front left side, behind fence', 'addon', 'Add-on',
      'Smaller tree at the front left fence. Branches growing into fence; sucker growth creeping over panels.',
      ['Trim branches growing into fence line', 'Remove sucker growth from fence perimeter']),
-    (12, 'Palm by the Pool',                      '📍 Backyard pool and patio',     'tbd',   'Price TBD',
-     'Palm tree beside the backyard pool and patio. Site visit needed to assess condition and scope.',
-     ['Assess palm condition and provide scope at site visit', 'Trim, remove, or prune per assessment']),
+    (12, 'Palm by the Pool',                      '📍 Backyard pool and patio',     'addon', 'Add-on',
+     'Palm tree beside the backyard pool and patio. Please assess and include in updated quote.',
+     ['Assess palm condition at site visit', 'Trim, remove, or prune per assessment and include in revised quote']),
 ]
 
 STATUS_BADGE = {
@@ -234,7 +234,7 @@ wom_html = f'''<!DOCTYPE html>
   <div class="sum-box"><div class="sum-lbl">Current Quote</div><div class="sum-val">$3,000</div><div class="sum-sub">6 items — #2509+#2510</div></div>
   <div class="sum-box highlight"><div class="sum-lbl">Proposed Budget</div><div class="sum-val" style="color:#166534">$3,200</div><div class="sum-sub">All 12 items</div></div>
   <div class="sum-box"><div class="sum-lbl">Total Items</div><div class="sum-val">12</div><div class="sum-sub">Full property scope</div></div>
-  <div class="sum-box"><div class="sum-lbl">Add-Ons to Price</div><div class="sum-val">6</div><div class="sum-sub">Items 04 05 06 07 11 12</div></div>
+  <div class="sum-box"><div class="sum-lbl">Add-Ons to Price</div><div class="sum-val">5</div><div class="sum-sub">Items 04 05 06 11 12</div></div>
 </div>
 
 <div class="legend">
@@ -249,8 +249,8 @@ wom_html = f'''<!DOCTYPE html>
 <div class="totals">
   <div class="tot-row"><span>Estimate #2509 — Pruning &amp; fallen palm (Items 01, 02, 08, 09, 10)</span><span>$1,500.00</span></div>
   <div class="tot-row"><span>Estimate #2510 — Norfolk Pine removal + stump (Item 03)</span><span>$1,500.00</span></div>
-  <div class="tot-row addon"><span>Add-ons — Items 04, 05, 06, 11</span><span>Your price: $________</span></div>
-  <div class="tot-row addon"><span>Items 07 &amp; 12 — price at site visit</span><span>Your price: $________</span></div>
+  <div class="tot-row"><span>Estimate #2509 — Roadside palm debris hauling (Item 07)</span><span>Included</span></div>
+  <div class="tot-row addon"><span>Add-ons — Items 04, 05, 06, 11, 12 (please price)</span><span>Your price: $________</span></div>
   <div class="tot-row grand"><span>Updated All-In Total (please provide)</span><span>$____________</span></div>
 </div>
 
