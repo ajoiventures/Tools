@@ -16,6 +16,22 @@ def b64(n, width=720, quality=65):
     return 'data:image/jpeg;base64,' + base64.b64encode(buf.getvalue()).decode()
 
 imgs = {n: b64(n) for n in range(1, 12)}
+
+# card_12 lives as palm_by_pool.jpeg in the base dir
+pool_path = os.path.join(BASE, 'palm_by_pool.jpeg')
+if os.path.exists(pool_path):
+    img = Image.open(pool_path).convert('RGB')
+    w, h = img.size
+    if w > 720:
+        img = img.resize((720, int(h*720/w)), Image.LANCZOS)
+    buf = io.BytesIO()
+    img.save(buf, 'JPEG', quality=65, optimize=True)
+    imgs[12] = 'data:image/jpeg;base64,' + base64.b64encode(buf.getvalue()).decode()
+    print(f'card_12 encoded from palm_by_pool.jpeg')
+else:
+    imgs[12] = None
+    print('palm_by_pool.jpeg not found')
+
 print('Images encoded')
 
 def photo_div(n, alt=''):
@@ -55,9 +71,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
 .item-info{padding:14px 16px;display:flex;flex-direction:column;gap:10px}
 .info-lbl{font-size:9px;font-weight:700;letter-spacing:1px;color:#8D6E63;text-transform:uppercase;margin-bottom:3px}
 .info-txt{font-size:12px;line-height:1.6;color:#374151}
-.work-list{list-style:none;display:flex;flex-direction:column;gap:4px}
-.work-list li{font-size:12px;font-weight:500;color:#14532D;background:#DCFCE7;border-radius:6px;padding:5px 10px 5px 26px;position:relative;line-height:1.4}
-.work-list li::before{content:"checkmark";position:absolute;left:9px;top:5px;color:#166534;font-weight:700;font-family:sans-serif}
+.work-list{list-style:none;display:flex;flex-direction:column;gap:5px}
+.work-list li{font-size:13px;font-weight:400;color:#1a1a1a;background:#F8F4EF;border-left:3px solid #5C4033;border-radius:0 6px 6px 0;padding:6px 10px 6px 12px;line-height:1.5}
 @media(max-width:580px){.item-body{grid-template-columns:1fr}.item-photo{border-right:none;border-bottom:1px solid #ddd8d0;height:240px}}
 """
 
@@ -146,7 +161,7 @@ wom_html = f'''<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Work Authorization — Word of Mouth Tree Service</title>
+<title>Quote Update Request — Word of Mouth Tree Service</title>
 <style>
 {SHARED_CSS}
 .hero{{background:#fff;border:1px solid #ddd8d0;border-radius:14px;padding:24px 28px;margin-bottom:20px;box-shadow:0 2px 10px rgba(0,0,0,.06)}}
@@ -192,8 +207,8 @@ wom_html = f'''<!DOCTYPE html>
 {NAV_WOM}
 <div class="hero">
   <div class="hero-top">
-    <div><h1>Work Authorization — All 12 Items</h1><div class="hero-sub">Word of Mouth Tree Service &middot; Proposed all-in offer: $3,200</div></div>
-    <div style="background:#92400e;color:#fff;font-size:11px;font-weight:700;letter-spacing:.8px;padding:6px 14px;border-radius:100px">OFFER PENDING</div>
+    <div><h1>Quote Update Request — All 12 Items</h1><div class="hero-sub">Word of Mouth Tree Service &middot; Please review and provide updated pricing</div></div>
+    <div style="background:#92400e;color:#fff;font-size:11px;font-weight:700;letter-spacing:.8px;padding:6px 14px;border-radius:100px">ACTION NEEDED</div>
   </div>
   <div class="parties">
     <div>
@@ -210,16 +225,16 @@ wom_html = f'''<!DOCTYPE html>
 </div>
 
 <div class="offer-banner">
-  <h2>&#128176; All-In Offer: $3,200 for All 12 Items</h2>
-  <p>Your existing estimates (#2509 + #2510) cover 6 items for $3,000. I am offering you the full job — all 12 items — for a flat <strong>$3,200</strong>. That is $200 more to pick up 6 additional trees and services and close the entire property in one visit.</p>
-  <div class="offer-script">"I want to give you the job. Can you add the missing items to your existing scope for a flat $3,200 all-in? I will sign today and pay by check on completion."</div>
+  <h2>&#128203; Request: Updated Quote for All 12 Items</h2>
+  <p>Your current estimates (#2509 + #2510) cover 6 of the 12 items on this property for $3,000. I would like to give you the full job. Please review the 6 add-on items below, price items #07 and #12 on your next visit, and send me an updated all-in quote. My proposed budget for all 12 items is <strong>$3,200</strong>.</p>
+  <div class="offer-script">Please reply with a revised quote covering all 12 items listed below. I am ready to move forward as soon as I receive your updated pricing.</div>
 </div>
 
 <div class="sum-row">
   <div class="sum-box"><div class="sum-lbl">Current Quote</div><div class="sum-val">$3,000</div><div class="sum-sub">6 items — #2509+#2510</div></div>
-  <div class="sum-box highlight"><div class="sum-lbl">Proposed All-In</div><div class="sum-val" style="color:#166534">$3,200</div><div class="sum-sub">All 12 items</div></div>
-  <div class="sum-box"><div class="sum-lbl">Items</div><div class="sum-val">12</div><div class="sum-sub">Total trees / services</div></div>
-  <div class="sum-box"><div class="sum-lbl">Add-Ons</div><div class="sum-val">+$200</div><div class="sum-sub">Items #04 05 06 07 11 12</div></div>
+  <div class="sum-box highlight"><div class="sum-lbl">Proposed Budget</div><div class="sum-val" style="color:#166534">$3,200</div><div class="sum-sub">All 12 items</div></div>
+  <div class="sum-box"><div class="sum-lbl">Total Items</div><div class="sum-val">12</div><div class="sum-sub">Full property scope</div></div>
+  <div class="sum-box"><div class="sum-lbl">Add-Ons to Price</div><div class="sum-val">6</div><div class="sum-sub">Items 04 05 06 07 11 12</div></div>
 </div>
 
 <div class="legend">
@@ -234,33 +249,23 @@ wom_html = f'''<!DOCTYPE html>
 <div class="totals">
   <div class="tot-row"><span>Estimate #2509 — Pruning &amp; fallen palm (Items 01, 02, 08, 09, 10)</span><span>$1,500.00</span></div>
   <div class="tot-row"><span>Estimate #2510 — Norfolk Pine removal + stump (Item 03)</span><span>$1,500.00</span></div>
-  <div class="tot-row addon"><span>Add-ons — Items 04, 05, 06, 11 (to confirm with WOM)</span><span>+TBD</span></div>
-  <div class="tot-row addon"><span>Items 07 &amp; 12 — WOM to price at site</span><span>+TBD</span></div>
-  <div class="tot-row grand"><span>&#128176; Proposed All-In Total</span><span style="color:#166534">$3,200.00</span></div>
+  <div class="tot-row addon"><span>Add-ons — Items 04, 05, 06, 11</span><span>Your price: $________</span></div>
+  <div class="tot-row addon"><span>Items 07 &amp; 12 — price at site visit</span><span>Your price: $________</span></div>
+  <div class="tot-row grand"><span>Updated All-In Total (please provide)</span><span>$____________</span></div>
 </div>
 
 <div class="sig-card">
-  <div class="sig-title">Authorization &amp; Signature</div>
-  <div class="sig-txt">This document proposes a flat $3,200 all-in price for all 12 items above, subject to Word of Mouth Tree Service confirming the add-on scope and pricing items #07 and #12 at the site visit. Upon agreement, both parties sign below and work is authorized to begin. Payment of $3,200.00 due on completion by check (preferred) or ACH.</div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:16px">
-    <div>
-      <div class="p-lbl" style="margin-bottom:8px">Owner — Paul Irumudomon</div>
-      <div class="sig-grid">
-        <div><label class="sig-lbl">Signature</label><input class="sig-line" type="text" placeholder="Sign here"></div>
-        <div><label class="sig-lbl">Date</label><input class="sig-line" type="text" placeholder="MM / DD / YYYY"></div>
-      </div>
-    </div>
-    <div>
-      <div class="p-lbl" style="margin-bottom:8px">Contractor — Word of Mouth Tree Service</div>
-      <div class="sig-grid">
-        <div><label class="sig-lbl">Signature</label><input class="sig-line" type="text" placeholder="Sign here"></div>
-        <div><label class="sig-lbl">Date</label><input class="sig-line" type="text" placeholder="MM / DD / YYYY"></div>
-      </div>
-    </div>
+  <div class="sig-title">&#9993; Please Reply With Your Updated Quote</div>
+  <div class="sig-txt">Review the 12 items and photos above. Reply to this email with:<br><br>
+  1. Confirmation of which add-on items (04, 05, 06, 11) you can include<br>
+  2. Pricing for items #07 (roadside debris hauling) and #12 (pool palm) after site review<br>
+  3. Your updated all-in total for all items you can cover<br><br>
+  My proposed budget for the full scope is <strong>$3,200</strong>. I am ready to move forward immediately upon receiving your revised quote. Payment by check on completion.</div>
+  <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:12px 16px;margin-top:12px;font-size:13px;color:#14532D">
+    <strong>Reply to:</strong> Paul Irumudomon &nbsp;&middot;&nbsp; (407) 717-0861 &nbsp;&middot;&nbsp; ajoiventures@gmail.com
   </div>
-  <div style="font-size:11px;color:#9ca3af;border-top:1px solid #f0ece5;padding-top:12px">Final agreed price: $_____________ &nbsp;&nbsp;&nbsp; Payment method: &#9744; Check &nbsp; &#9744; ACH</div>
 </div>
-<button class="print-btn" onclick="window.print()">Print / Save as PDF to send to WOM</button>
+<button class="print-btn" onclick="window.print()">Save as PDF / Print to attach to email</button>
 </div>
 </body>
 </html>'''
