@@ -80,7 +80,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
 # status: 'quoted' = already in #2509/#2510, 'addon' = being added in $3,200 offer, 'tbd' = needs pricing
 
 wom_items = [
-    (1,  'Fallen Palm — Front Driveway',          '📍 Front driveway',              'quoted', '#2509',
+    (1,  'Fallen Palm — Front Driveway',          '📍 Front driveway',              'addon', 'Add-on',
      'Fallen/downed palm in the front driveway. Roots exposed, tree fully toppled.',
      ['Remove downed palm from front yard', 'Full debris cleanup']),
     (2,  'Camphor Tree — Front Yard',             '📍 Front yard',                  'quoted', '#2509',
@@ -234,7 +234,7 @@ wom_html = f'''<!DOCTYPE html>
   <div class="sum-box"><div class="sum-lbl">Current Quote</div><div class="sum-val">$3,000</div><div class="sum-sub">6 items — #2509+#2510</div></div>
   <div class="sum-box highlight"><div class="sum-lbl">Proposed Budget</div><div class="sum-val" style="color:#166534">$3,200</div><div class="sum-sub">All 12 items</div></div>
   <div class="sum-box"><div class="sum-lbl">Total Items</div><div class="sum-val">12</div><div class="sum-sub">Full property scope</div></div>
-  <div class="sum-box"><div class="sum-lbl">Add-Ons to Price</div><div class="sum-val">5</div><div class="sum-sub">Items 04 05 06 11 12</div></div>
+  <div class="sum-box"><div class="sum-lbl">Add-Ons to Price</div><div class="sum-val">6</div><div class="sum-sub">Items 01 04 05 06 11 12</div></div>
 </div>
 
 <div class="legend">
@@ -247,10 +247,10 @@ wom_html = f'''<!DOCTYPE html>
 {wom_cards_html}
 
 <div class="totals">
-  <div class="tot-row"><span>Estimate #2509 — Pruning &amp; fallen palm (Items 01, 02, 08, 09, 10)</span><span>$1,500.00</span></div>
+  <div class="tot-row"><span>Estimate #2509 — Pruning (Items 02, 07, 08, 09, 10)</span><span>$1,500.00</span></div>
   <div class="tot-row"><span>Estimate #2510 — Norfolk Pine removal + stump (Item 03)</span><span>$1,500.00</span></div>
   <div class="tot-row"><span>Estimate #2509 — Roadside palm debris hauling (Item 07)</span><span>Included</span></div>
-  <div class="tot-row addon"><span>Add-ons — Items 04, 05, 06, 11, 12 (please price)</span><span>Your price: $________</span></div>
+  <div class="tot-row addon"><span>Add-ons — Items 01, 04, 05, 06, 11, 12 (please price)</span><span>Your price: $________</span></div>
   <div class="tot-row grand"><span>Updated All-In Total (please provide)</span><span>$____________</span></div>
 </div>
 
